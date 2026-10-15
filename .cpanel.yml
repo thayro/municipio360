@@ -1,0 +1,11 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/nexcode/public_html/municipio360/
+    - /bin/mkdir -p "$DEPLOYPATH"
+    - /bin/cp -R api assets tools "$DEPLOYPATH"
+    - /bin/cp index.php README.md "$DEPLOYPATH"
+    - /bin/mkdir -p "$DEPLOYPATH/cache" "$DEPLOYPATH/data/tse2024"
+    - /bin/cp cache/index.html "$DEPLOYPATH/cache/"
+    - /bin/cp data/README.txt data/representantes.exemplo.json "$DEPLOYPATH/data/"
+    - /bin/cp data/tse2024/index.html "$DEPLOYPATH/data/tse2024/"
