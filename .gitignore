@@ -1,0 +1,20 @@
+# Cache de API e arquivos gerados
+/cache/*
+!/cache/.htaccess
+!/cache/index.html
+/data/tse2024/*
+!/data/tse2024/.htaccess
+!/data/tse2024/index.html
+# Configuração local e segredos
+.env
+.env.*
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
