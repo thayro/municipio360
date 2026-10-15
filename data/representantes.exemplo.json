@@ -1,0 +1,6 @@
+{
+  "CODIGO_IBGE_7_DIGITOS": {
+    "prefeito": {"nome":"NOME CONFERIDO", "partido":"SIGLA", "foto":"https://DOMINIO-OFICIAL/foto.jpg", "fonte":"Portal oficial da Prefeitura", "fonte_url":"https://DOMINIO-OFICIAL/prefeito"},
+    "vereadores": [{"nome":"NOME CONFERIDO", "partido":"SIGLA", "foto":"", "fonte":"Portal oficial da Câmara", "fonte_url":"https://DOMINIO-OFICIAL/vereadores"}]
+  }
+}

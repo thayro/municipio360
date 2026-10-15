@@ -1,22 +1,25 @@
-# Município360
+# Município360 v1.8 — Gestão, finanças e menções locais
 
-Plataforma brasileira de inteligência municipal e transparência pública.
+## Instalação VPS
 
-## Funcionalidades (v1.9)
-- Mapa interativo do Brasil, por estado e município, com dados do IBGE;
-- Notícias nacionais e municipais, via GDELT e fallback RSS;
-- Licitações e contratos publicados no PNCP;
-- Dados eleitorais públicos do TSE, com indicação da diferença entre eleitos em 2024 e ocupantes atuais;
-- Consulta fiscal ao SICONFI e links oficiais de prestação de contas;
-- Pesquisas públicas relacionadas a municípios, prefeitos e vereadores.
+Faça backup da pasta atual e substitua os arquivos da pasta `municipio360` pela versão do ZIP. Não sobrescreva nem remova `/home/nexcode/ssl-municipio360/ibge-ca-bundle.pem`, pois o `api/common.php` continua a usá-lo. PHP 8.2 com extensões cURL e mbstring. Sem MySQL ou Python.
 
-## Requisitos
-PHP 8.2, extensão cURL, JavaScript e acesso HTTPS às fontes públicas. Sem MySQL e sem Python.
+## Seleção de município
 
-## Instalação
-Publique o conteúdo da aplicação na pasta `municipio360/` do servidor web. Configure um CA bundle acessível ao PHP para as consultas HTTPS e preserve dados temporários fora do controle de versão.
+- **IBGE**: cidades e códigos oficiais.
+- **TSE**: o endpoint de representantes da v1.7 continua consultando o DivulgaCandContas diretamente. Quando a API não retornar situação de eleito de modo verificável, deixa nomes vazios. *Eleitos de 2024 não equivalem necessariamente a ocupantes em 2026*. Fotos somente quando vier URL oficial.
+- **SICONFI/Tesouro**: novo `api/financas.php?id=5200050&ano=2025` consulta o demonstrativo DCA anual da cidade. Mostra lançamentos brutos (amostra), não soma valores contábeis distintos. Pode haver indisponibilidade ou exercício ainda não publicado.
+- **PNCP**: licitações da versão anterior permanecem disponíveis.
+- **Notícias e contexto social**: novo `api/social.php?id=5200050` e `?pessoa=...` pesquisa matérias indexadas no GDELT, oferece links de busca do X, Reddit, YouTube, Instagram e Facebook. **Não extrai publicações privadas, não mede engajamento social e não inventa contagens.** As plataformas sociais exigem APIs/autorização para extração direta.
 
-## Fontes e ressalvas
-Dados agregados de IBGE, TSE, PNCP, SICONFI, GDELT e RSS podem estar incompletos ou indisponíveis. Os resultados eleitorais de 2024 não comprovam automaticamente os ocupantes atuais dos mandatos. Links para redes sociais são pesquisas públicas e não implicam coleta integral das plataformas.
+## Diagnósticos
 
-**Status do repositório:** inicialização de documentação; os arquivos-fonte da versão 1.9 ainda precisam ser enviados a este repositório.
+Teste `/api/localidades.php?tipo=estados`, `/api/representantes.php?id=...`, `/api/financas.php?id=...`, `/api/social.php?id=...`. APIs podem estar indisponíveis independentemente do portal.
+
+## Segurança
+
+Requisições HTTPS com verificação ativa e URLs externas fixas. Cache JSON temporário em `cache/` protegido por `.htaccess`; para Nginx, bloqueie acesso público a `/cache` e `/data`. Nenhuma credencial externa requerida.
+
+
+## v1.9 – Resiliência de notícias
+Quando o GDELT não responde, o módulo social, as notícias locais e o feed nacional tentam Google Notícias RSS. Isso não equivale a acesso direto a redes sociais. O arquivo privado /home/nexcode/ssl-municipio360/ibge-ca-bundle.pem permanece configurado em api/common.php; preservá-lo no servidor.
