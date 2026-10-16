@@ -313,6 +313,18 @@ function renderUnifiedMedia(){
   const note=document.createElement('div');note.className='note';note.textContent='Fontes indisponíveis: '+unifiedMedia.failures.join(' | ');$('newsList').append(note);
  }
 }
+$('newsList').addEventListener('error',e=>{
+ const img=e.target;
+ if(!(img instanceof HTMLImageElement)||!img.classList.contains('news-thumb'))return;
+ const shell=img.closest('.news-card-shell');
+ if(!shell||shell.querySelector('.news-fetch-image'))return;
+ const link=shell.querySelector('a.news-editorial-item');
+ if(!link)return;
+ const button=document.createElement('button');
+ button.type='button';button.className='news-fetch-image';button.dataset.newsImageUrl=link.href;
+ button.textContent='▣ Tentar buscar imagem da notícia';
+ shell.append(button);
+},true);
 $('newsList').addEventListener('click',async e=>{
  const btn=e.target.closest('.news-fetch-image');
  if(!btn||!$('newsList').contains(btn))return;
