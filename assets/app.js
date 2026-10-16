@@ -366,12 +366,14 @@ function positionStatePopup(event){
  y=Math.max(8,Math.min(y,innerHeight-rect.height-8));
  tip.style.left=x+'px';tip.style.top=y+'px';
 }
+/* Filiações dos ocupantes cadastrados, referência consultada em 16/10/2026. */
+const nationalGovernorParties={"AC":"PP","AL":"MDB","AP":"UNIÃO","AM":"UNIÃO","BA":"PT","CE":"PT","DF":"PP","ES":"MDB","GO":"MDB","MA":"MDB","MT":"Republicanos","MS":"PP","MG":"PSD","PA":"MDB","PB":"PP","PR":"PSD","PE":"PSD","PI":"PT","RJ":"Sem partido","RN":"PT","RS":"PSD","RO":"PSD","RR":"Republicanos","SC":"PL","SP":"Republicanos","SE":"PSD","TO":"Republicanos"};
 function showStatePopup(uf,event){
  const info=nationalGovernors.find(item=>item[0]===uf);if(!info)return;
  activeStatePopupUF=uf;
  const tip=statePopupElement(),count=stateMunicipalityCounts.get(uf);
  tip.innerHTML='<strong>'+escapeHtml(info[1])+' <small>('+escapeHtml(uf)+')</small></strong>'+
-  '<span>Governador(a): <b>'+escapeHtml(info[2])+'</b></span>'+
+  '<span>Governador(a): <b>'+escapeHtml(info[2])+'</b> <small class="state-map-party">('+escapeHtml(nationalGovernorParties[uf]||'Partido não confirmado')+')</small></span>'+
   '<span>Municípios: <b class="state-map-municipality-count">'+escapeHtml(count===undefined?'Consultando IBGE…':count===null?'Indisponível':count.toLocaleString('pt-BR'))+'</b></span>'+
   '<small class="state-map-source">Municípios: cadastro IBGE</small>';
  tip.hidden=false;positionStatePopup(event);
