@@ -24,19 +24,19 @@ html,body{background:#0b1525;color:var(--paper)}body{background-image:radial-gra
 /* v1.4 - rótulos municipais e fichas de representação */
 .municipal-label{font:600 7px Inter,Arial,sans-serif;fill:#edf8ff;paint-order:stroke;stroke:#10243b;stroke-width:2.6px;stroke-linejoin:round;text-anchor:middle;pointer-events:none}.municipal-selected-label{font:800 12px Inter,Arial,sans-serif;fill:#fff;paint-order:stroke;stroke:#132135;stroke-width:4px;text-anchor:middle;pointer-events:none}.official-heading{font-size:13px;margin:18px 0 10px}.official-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:10px}.official-person{display:flex;gap:12px;align-items:start;background:#182b44;border:1px solid #375370;border-radius:12px;padding:12px}.official-person img,.person-avatar{width:64px;height:76px;border-radius:9px;object-fit:cover;background:#2a435e;flex:none}.person-avatar{display:grid;place-items:center;font-size:28px}.official-person strong{display:block;font-size:13px}.official-person small{display:block;color:#a6c2dc;font-size:10px;margin-top:4px}.official-person a{font-size:10px;display:inline-block;margin-top:8px}
 
-/* v1.5 — mapas por macrorregião; tooltip somente ao interagir */
-.svg-wrap .uf.region-norte path{fill:#276b83}
-.svg-wrap .uf.region-nordeste path{fill:#4d6f9e}
-.svg-wrap .uf.region-centro path{fill:#6076a3}
-.svg-wrap .uf.region-sudeste path{fill:#316a81}
-.svg-wrap .uf.region-sul path{fill:#53678d}
+/* Mapas por macrorregião — paleta multicolorida; cores meramente visuais */
+.svg-wrap .uf.region-norte path{fill:#279b65}
+.svg-wrap .uf.region-nordeste path{fill:#efbd43}
+.svg-wrap .uf.region-centro path{fill:#ee8b42}
+.svg-wrap .uf.region-sudeste path{fill:#df6259}
+.svg-wrap .uf.region-sul path{fill:#38b5a4}
 .svg-wrap .uf:hover path,.svg-wrap .uf.selected path{fill:#91d8fb!important;stroke:#f4fbff!important}
-.municipal-shape{fill:#3f7097;stroke:#12253f;stroke-width:.68}
-.municipal-shape.region-norte{fill:#28718b}
-.municipal-shape.region-nordeste{fill:#54769f}
-.municipal-shape.region-centro{fill:#637ba4}
-.municipal-shape.region-sudeste{fill:#346f89}
-.municipal-shape.region-sul{fill:#596e96}
+.municipal-shape{fill:#47947d;stroke:#12253f;stroke-width:.68}
+.municipal-shape.region-norte{fill:#279b65}
+.municipal-shape.region-nordeste{fill:#efbd43}
+.municipal-shape.region-centro{fill:#ee8b42}
+.municipal-shape.region-sudeste{fill:#df6259}
+.municipal-shape.region-sul{fill:#38b5a4}
 .municipal-shape.shade-1{filter:brightness(1.08)}
 .municipal-shape.shade-2{filter:brightness(.91)}
 .municipal-shape.shade-3{filter:brightness(1.16)}
