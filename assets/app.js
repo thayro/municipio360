@@ -547,6 +547,8 @@ async function locateVisitor(){
 }
 $('locateMe').addEventListener('click',locateVisitor);
 
+// Conecta os eventos do mapa nacional também na primeira abertura da página.
+wireMap();
 loadStates();
 loadBrazilFeeds();
 })();
