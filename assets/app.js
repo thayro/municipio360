@@ -26,7 +26,16 @@ function representativeSocialLinks(x){
 }
 function representativeCard(x){
  const photo=x.foto?'<img loading="lazy" referrerpolicy="no-referrer" onerror="this.hidden=true;this.nextElementSibling.hidden=false" src="'+escapeHtml(x.foto)+'" alt="Foto eleitoral de '+escapeHtml(x.nome)+'"><span class="person-avatar" hidden aria-hidden="true">♙</span>':'<span class="person-avatar" aria-hidden="true">♙</span>';
- return '<article class="official-person"><div class="rep-identity"><div class="rep-photo">'+photo+'</div><div class="rep-score" data-person="'+escapeHtml(x.nome)+'"><div class="rep-score-meter" role="status" aria-label="Índice de tom de notícias ainda não calculado"><strong>—</strong><span>/ 1000</span></div><small>Tom da mídia</small><small class="rep-score-state">Aguardando consulta automática</small></div></div><div class="rep-details"><strong>'+escapeHtml(x.nome)+'</strong><small>'+escapeHtml(x.cargo)+' · '+escapeHtml(x.partido||'Partido não informado')+'</small><small>'+escapeHtml(x.fonte)+' · mandato atual não verificado</small>'+(x.url?'<a target="_blank" rel="noopener noreferrer" href="'+escapeHtml(x.url)+'">Consultar fonte ↗</a>':'')+representativeSocialLinks(x)+'<div class="rep-score-notice">Indicador experimental sobre manchetes indexadas, não mede caráter, aprovação ou desempenho. Sem pontuação quando não houver evidências suficientes.</div></div></article>';
+ return '<article class="official-person rep-modern">'+
+  '<div class="rep-photo">'+photo+'</div>'+
+  '<div class="rep-details"><strong>'+escapeHtml(x.nome)+'</strong><small>'+escapeHtml(x.cargo)+'</small><small class="rep-party">'+escapeHtml(x.partido||'Partido não informado')+'</small></div>'+
+  '<div class="rep-score" data-person="'+escapeHtml(x.nome)+'"><div class="rep-score-meter" role="status" aria-label="Índice de tom de notícias ainda não calculado"><strong>…</strong><span>/ 1000</span></div><small>Tom da mídia</small><small class="rep-score-state">Calculando automaticamente</small></div>'+
+  '<details class="rep-profile"><summary>Ver perfil <span aria-hidden="true">↗</span></summary><div class="rep-profile-body">'+
+  '<small>'+escapeHtml(x.fonte||'Fonte eleitoral')+' · mandato atual não verificado</small>'+
+  (x.url?'<a target="_blank" rel="noopener noreferrer" href="'+escapeHtml(x.url)+'">Consultar fonte oficial ↗</a>':'')+
+  representativeSocialLinks(x)+
+  '<div class="rep-score-notice">Indicador experimental baseado em manchetes indexadas, não mede caráter, aprovação ou desempenho. Sem nota quando não há evidência suficiente.</div>'+
+  '</div></details></article>';
 }
 // Classificação conservadora de linguagem de títulos. Não decide a veracidade dos fatos.
 function scoreHeadline(text){
