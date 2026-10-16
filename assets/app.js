@@ -17,8 +17,30 @@ function renderCityOptions(){const term=$('citySearch').value.toLocaleLowerCase(
 async function selectCity(id){const city=state.cities.find(c=>String(c.id)===String(id));if(!city)return;state.city=city;setStatus('Município '+city.nome+' selecionado. Consultando notícias e contratações...');$('placeTag').textContent=city.nome+' / '+ufCode(city);$('locationHeading').textContent=city.nome+' — '+ufCode(city);$('locationDetails').textContent='Código IBGE: '+city.id+' · Fontes: IBGE, notícias indexadas e PNCP.';$('ibgeLink').href='https://cidades.ibge.gov.br/brasil/'+city.id+'/panorama';$('prefeitoMeta').textContent='Prefeito atual: ainda não verificado automaticamente. Confira no portal da Prefeitura e no TSE.';$('vereadoresMeta').textContent='Composição atual da Câmara: consulte a fonte institucional; não inferimos vereadores apenas pelos resultados eleitorais.';const q=encodeURIComponent('prefeitura '+city.nome+' '+state.uf);$('govLinks').innerHTML='<a target="_blank" rel="noopener noreferrer" href="https://www.google.com/search?q='+q+'">Localizar prefeitura ↗</a><a target="_blank" rel="noopener noreferrer" href="https://www.google.com/search?q='+encodeURIComponent('câmara municipal '+city.nome+' '+state.uf)+'">Localizar Câmara ↗</a>';highlightMunicipality(String(city.id));loadGovernance();loadFinance();loadSocial();$('totalNews').textContent='…';$('totalBids').textContent='…';loadNews();loadContracts();}
 
 function representativeCard(x){
- return '<article class="official-person">'+(x.foto?'<img loading="lazy" referrerpolicy="no-referrer" onerror="this.hidden=true;this.nextElementSibling.hidden=false" src="'+escapeHtml(x.foto)+'" alt="Foto eleitoral de '+escapeHtml(x.nome)+'"><span class="person-avatar" hidden aria-hidden="true">♙</span>':'<span class="person-avatar" aria-hidden="true">♙</span>')+'<div><strong>'+escapeHtml(x.nome)+'</strong><small>'+escapeHtml(x.cargo)+' · '+escapeHtml(x.partido||'Partido não informado')+'</small><small>'+escapeHtml(x.fonte)+' · referência não confirmada para mandato atual</small>'+(x.url?'<a target="_blank" rel="noopener noreferrer" href="'+escapeHtml(x.url)+'">Consultar fonte ↗</a>':'')+'</div></article>';
+ return '<article class="official-person">'+(x.foto?'<img loading="lazy" referrerpolicy="no-referrer" onerror="this.hidden=true;this.nextElementSibling.hidden=false" src="'+escapeHtml(x.foto)+'" alt="Foto eleitoral de '+escapeHtml(x.nome)+'"><span class="person-avatar" hidden aria-hidden="true">♙</span>':'<span class="person-avatar" aria-hidden="true">♙</span>')+'<div><strong>'+escapeHtml(x.nome)+'</strong><small>'+escapeHtml(x.cargo)+' · '+escapeHtml(x.partido||'Partido não informado')+'</small><small>'+escapeHtml(x.fonte)+' · referência não confirmada para mandato atual</small>'+(x.url?'<a target="_blank" rel="noopener noreferrer" href="'+escapeHtml(x.url)+'">Consultar fonte ↗</a>':'')+'<div class="media-score" data-person="'+escapeHtml(x.nome)+'"><button type="button" class="btn small media-score-button">Analisar cobertura</button><small>Notícias indexadas; não é nota de reputação.</small></div>'+'</div></article>';
 }
+async function inspectRepresentativeMedia(button){
+ const panel=button.closest('.media-score'),city=state.city;
+ if(!panel||!city)return;
+ const id=String(city.id),name=panel.dataset.person;
+ button.disabled=true;button.textContent='Consultando notícias...';
+ try{
+  const r=await api('social.php?id='+encodeURIComponent(id)+'&pessoa='+encodeURIComponent(name));
+  if(String(state.city?.id)!==id||!panel.isConnected)return;
+  const items=(r.noticias_indexadas||[]).filter(x=>x&&/^https?:\/\//i.test(String(x.url||'')));
+  const unique=new Map();
+  items.forEach(x=>{try{const domain=new URL(x.url).hostname.replace(/^www\./,'');if(!unique.has(domain))unique.set(domain,x)}catch{}});
+  const n=items.length,sources=unique.size;
+  // Mede diversidade de veículos, não qualidade moral ou aprovação popular.
+  const coverage=Math.min(100,Math.round(sources/10*100));
+  panel.innerHTML='<div class="media-score-reading"><strong>'+coverage+'/100</strong><span>Índice de cobertura · '+n+' matérias / '+sources+' fontes</span></div><small>Escala: 10 ou mais fontes distintas = 100. Não mede reputação, aprovação nem sentimento.</small>'+
+   (items.length?'<details><summary>Ver matérias consultadas</summary>'+items.slice(0,10).map(x=>'<a href="'+escapeHtml(x.url)+'" target="_blank" rel="noopener noreferrer">'+escapeHtml(x.titulo||x.fonte||'Notícia')+' ↗</a>').join('')+'</details>':'<small>Sem matérias encontradas nesta consulta; ausência de cobertura não significa reputação negativa.</small>');
+ }catch(e){button.disabled=false;button.textContent='Tentar novamente';const note=document.createElement('small');note.textContent='Consulta indisponível: '+e.message;panel.appendChild(note);}
+}
+document.addEventListener('click',event=>{
+ const b=event.target.closest('.media-score-button');
+ if(b)inspectRepresentativeMedia(b);
+});
 async function loadGovernance(){
  const city=state.city;if(!city)return;
  const mayorCards=$('prefeitoCards'),councilCards=$('vereadoresCards');
