@@ -178,24 +178,8 @@ function renderNationalGovernance(){
 
 // Fontes governamentais verificadas, priorizadas antes de consultas externas.
 const nationalOfficialPhotos={'Luiz Inácio Lula da Silva':"https://www.gov.br/planejamento/pt-br/assuntos/noticias/2026/imagens/55156120202_eb131de887_o.jpg/@@images/image-1847-ab43b5834cceb5a118f2f34172060dff.jpeg"};
-let nationalTsePhotoPromise=null;
-async function loadNationalTsePhotos(applyPhotos){
- if(nationalTsePhotoPromise)return nationalTsePhotoPromise;
- const ufs=['BR',...nationalGovernors.map(x=>x[0])];
- let next=0,found=0;
- nationalTsePhotoPromise=Promise.all(Array.from({length:2},async()=>{
-  while(next<ufs.length){
-   const uf=ufs[next++];
-   try{
-    const result=await api('fotos_tse_nacionais.php?uf='+encodeURIComponent(uf));
-    if(state.city||state.uf)return;
-    if(result.quantidade){found++;applyPhotos(result);}
-    else console.info('[Município360/Fotos TSE]',uf,result.ausentes);
-   }catch(e){console.warn('[Município360/Fotos TSE]',uf,e.message);}
-  }
- })).then(()=>console.info('[Município360/Fotos TSE] Fotos de candidaturas encontradas:',found,'de',ufs.length));
- return nationalTsePhotoPromise;
-}
+// A rota de 2022 anteriormente usada retornou HTTP 404; mantemos fotos verificadas
+// e não disparamos consultas por visitante enquanto não houver endpoint confirmado.
 let nationalPhotoPromise=null;
 async function loadNationalPhotos(){
  if(!document.querySelector('[data-national-photo]')){console.warn('[Município360/Fotos] Nenhum cartão nacional localizado no DOM.');return;}
@@ -208,7 +192,7 @@ async function loadNationalPhotos(){
   document.querySelectorAll('[data-national-photo]').forEach(box=>{
    const key=box.dataset.nationalPhoto,url=photos[key];
    if(box.querySelector('img'))return;
-   if(typeof url!=='string'||!(['https://upload.wikimedia.org/','https://www.gov.br/','https://resultados.tse.jus.br/'].some(prefix=>url.startsWith(prefix)))){console.warn('[Município360/Fotos] Sem URL válida:',key,url||'(vazio)');return;}
+   if(typeof url!=='string'||!(['https://upload.wikimedia.org/','https://www.gov.br/'].some(prefix=>url.startsWith(prefix))))return;
    const fallback=box.querySelector('.national-uf');
    const img=document.createElement('img');
    img.src=url;img.alt='Retrato de '+key;img.loading='lazy';img.referrerPolicy='no-referrer';
@@ -218,7 +202,7 @@ async function loadNationalPhotos(){
   });
  }
  applyPhotos({fotos:nationalOfficialPhotos,consultados:1});
- loadNationalTsePhotos(applyPhotos);
+ // Consulta eleitoral de 2022 suspensa: rota de fotos não confirmada (HTTP 404).
  // Mantém somente fotos antigas em cache como alternativa; evita novas consultas em massa à Wikipédia.
  if(!nationalPhotoPromise){
   nationalPhotoPromise=api('fotos_nacionais.php?legado=1').then(data=>{
