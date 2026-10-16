@@ -10,5 +10,5 @@ if(!($r['ok']??false)){
  respond(['ok'=>false,'error'=>'Noticiário nacional indisponível','detail'=>'GDELT: '.($r['error']??'').'; RSS: '.($rss['error']??'')],502);
 }
 $items=[];$seen=[];
-foreach(($r['data']['articles']??[]) as $a){$link=(string)($a['url']??'');$title=trim((string)($a['title']??''));if(!preg_match('~^https?://~',$link)||$title==='')continue;$key=mb_strtolower(preg_replace('/\s+/u',' ', $title),'UTF-8');if(isset($seen[$key]))continue;$seen[$key]=true;$items[]=['titulo'=>$title,'url'=>$link,'fonte'=>(string)($a['domain']??''),'data'=>(string)($a['seendate']??''),'origem'=>'GDELT'];}
+foreach(($r['data']['articles']??[]) as $a){$link=(string)($a['url']??'');$title=trim((string)($a['title']??''));if(!preg_match('~^https?://~',$link)||$title==='')continue;$key=mb_strtolower(preg_replace('/\s+/u',' ', $title),'UTF-8');if(isset($seen[$key]))continue;$seen[$key]=true;$items[]=['titulo'=>$title,'url'=>$link,'fonte'=>(string)($a['domain']??''),'data'=>(string)($a['seendate']??''),'imagem'=>preg_match('~^https?://~i',(string)($a['socialimage']??''))?(string)$a['socialimage']:null,'origem'=>'GDELT'];}
 respond(['ok'=>true,'noticias'=>$items,'total'=>count($items),'nacional'=>true,'stale'=>$r['stale']??false,'aviso'=>'Amostra de notícias indexadas sobre assuntos municipais do Brasil; não abrange todos os veículos nem todas as cidades.']);
