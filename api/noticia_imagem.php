@@ -21,17 +21,27 @@ function googleNewsOriginal(string $link): ?string {
   curl_setopt_array($ch,[CURLOPT_POST=>true,CURLOPT_POSTFIELDS=>$post,CURLOPT_RETURNTRANSFER=>true,CURLOPT_FOLLOWLOCATION=>false,CURLOPT_CONNECTTIMEOUT=>4,CURLOPT_TIMEOUT=>9,CURLOPT_SSL_VERIFYPEER=>true,CURLOPT_SSL_VERIFYHOST=>2,CURLOPT_USERAGENT=>'Mozilla/5.0 (compatible; Municipio360/2.0)',CURLOPT_HTTPHEADER=>['Content-Type: application/x-www-form-urlencoded;charset=UTF-8','Accept: */*']]);
   if($ca=caBundlePath())curl_setopt($ch,CURLOPT_CAINFO,$ca);
   $out=curl_exec($ch);curl_close($ch);
-  if(is_string($out)&&strlen($out)<600000&&preg_match('~https?://[^"\\\\\s]+~',$out,$matches)){
-   // O RPC tem JSON aninhado e pode conter links do Google: aceite apenas o destino de artigo.
-   if(preg_match_all('~https?:(?:\\\\/){0,2}[^"\\\\\s<>]+~',$out,$urls)){
-    foreach($urls[0] as $candidate){
-     $candidate=str_replace('\\/','/',$candidate);
-     if(filter_var($candidate,FILTER_VALIDATE_URL)){
-      $h=strtolower((string)parse_url($candidate,PHP_URL_HOST));
-      if($h && $h!=='news.google.com' && $h!=='www.google.com' && $h!=='google.com')return $candidate;
+  if(is_string($out)&&strlen($out)<600000){
+   $pos=strpos($out,'[[');
+   $outer=$pos===false?null:json_decode(substr($out,$pos),true);
+   $walk=function($value,int $depth=0) use (&$walk): ?string {
+    if($depth>12)return null;
+    if(is_array($value)){
+     foreach($value as $item){$found=$walk($item,$depth+1);if($found!==null)return $found;}
+    }elseif(is_string($value)){
+     $trim=trim($value);
+     if(str_starts_with($trim,'[')||str_starts_with($trim,'{')){
+      $decoded=json_decode($trim,true);
+      if(is_array($decoded))return $walk($decoded,$depth+1);
+     }
+     if(filter_var($trim,FILTER_VALIDATE_URL)&&str_starts_with($trim,'https://')){
+      $domain=strtolower((string)parse_url($trim,PHP_URL_HOST));
+      if($domain && $domain!=='news.google.com' && !str_ends_with($domain,'.google.com'))return $trim;
      }
     }
-   }
+    return null;
+   };
+   if(is_array($outer))return $walk($outer);
   }
  }
  return null;
