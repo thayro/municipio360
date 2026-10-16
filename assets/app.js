@@ -307,7 +307,7 @@ function renderUnifiedMedia(){
  $('totalNews').textContent=total;
  $('newsList').innerHTML=origin==='redes'
  ?'<div class="placeholder">As redes sociais disponíveis estão nos links de busca acima. Não há coleta direta de posts autenticados neste momento.</div>'
- :entries.length?entries.slice(0,100).map(n=>'<div class="news-card-shell"><a class="news-item news-editorial-item" href="'+escapeHtml(n.url)+'" target="_blank" rel="noopener noreferrer"><span class="news-type">'+escapeHtml(newsPlatform(n)||newsPublisher(n))+'</span>'+(newsThumbnail(n)?'<img class="news-thumb" loading="lazy" referrerpolicy="no-referrer" src="'+escapeHtml(newsThumbnail(n))+'" alt="" onerror="this.remove()">':'')+'<div class="news-item-copy"><span class="source">Fonte: '+escapeHtml(newsPublisher(n))+'</span><h3>'+escapeHtml(n.titulo)+'</h3><div class="metadata">'+escapeHtml(formatDate(n.data))+'</div></div><span class="news-go" aria-hidden="true">↗</span></a>'+'</div>').join('')
+ :entries.length?entries.slice(0,100).map(n=>'<div class="news-card-shell"><a class="news-item news-editorial-item" href="'+escapeHtml(n.url)+'" target="_blank" rel="noopener noreferrer">+(newsThumbnail(n)?'<img class="news-thumb" loading="lazy" referrerpolicy="no-referrer" src="'+escapeHtml(newsThumbnail(n))+'" alt="" onerror="this.remove()">':'')+'<div class="news-item-copy"><span class="source">Fonte: '+escapeHtml(newsPublisher(n))+'</span><h3>'+escapeHtml(n.titulo)+'</h3><div class="metadata">'+escapeHtml(formatDate(n.data))+'</div></div><span class="news-go" aria-hidden="true">↗</span></a>'+'</div>').join('')
  :'<div class="placeholder">Nenhuma publicação encontrada para este filtro nesta consulta.</div>';
  void hydrateNewsImages();
  if(unifiedMedia.failures.length){
@@ -339,7 +339,7 @@ async function hydrateNewsImages(){
    if(epoch!==newsPreviewEpoch||!imageUrl||!card.isConnected)continue;
    const image=new Image();
    image.className='news-thumb';image.loading='lazy';image.referrerPolicy='no-referrer';image.alt='';
-   image.onload=()=>{if(epoch===newsPreviewEpoch&&card.isConnected&&!card.querySelector('.news-thumb'))card.querySelector('.news-type')?.after(image)};
+   image.onload=()=>{if(epoch===newsPreviewEpoch&&card.isConnected&&!card.querySelector('.news-thumb'))card.querySelector('.news-editorial-item')?.prepend(image)};
    image.onerror=()=>{};
    image.src=imageUrl;
   }
