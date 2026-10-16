@@ -189,3 +189,8 @@ html,body{background:#0b1525;color:var(--paper)}body{background-image:radial-gra
 .rep-score-notice details{margin-top:7px}
 .rep-score-notice details a{display:block;margin:6px 0;overflow-wrap:anywhere}
 @media(max-width:420px){.rep-identity{flex-basis:76px}.rep-score-meter{width:68px;height:68px}}
+
+/* Foto e pontuação lado a lado, conteúdo do representante abaixo */
+.rep-identity{flex:1 1 100%;flex-direction:row;justify-content:flex-start;align-items:center;gap:12px}
+.rep-details{flex:1 1 100%}
+@media(min-width:560px){.rep-identity{flex:0 0 180px;align-items:flex-start}.rep-details{flex:1 1 170px}}
