@@ -175,24 +175,39 @@ function renderNationalGovernance(){
 
  loadNationalPhotos();}
 
+
 let nationalPhotoPromise=null;
 async function loadNationalPhotos(){
  if(!document.querySelector('[data-national-photo]'))return;
- if(!nationalPhotoPromise)nationalPhotoPromise=api('fotos_nacionais.php').catch(e=>({fotos:{},aviso:e.message}));
- const data=await nationalPhotoPromise;
- if(state.city||state.uf)return;
- const photos=data.fotos||{};
- document.querySelectorAll('[data-national-photo]').forEach(box=>{
-  const key=box.dataset.nationalPhoto,url=photos[key];
-  if(typeof url!=='string'||!url.startsWith('https://upload.wikimedia.org/')||box.querySelector('img'))return;
-  const fallback=box.querySelector('.national-uf')||box;
-  const img=document.createElement('img');
-  img.src=url;img.alt='Retrato de '+key;img.loading='lazy';img.referrerPolicy='no-referrer';
-  img.addEventListener('load',()=>{box.classList.add('has-photo');if(fallback!==box)fallback.hidden=true;});
-  img.addEventListener('error',()=>{img.remove();box.classList.remove('has-photo');if(fallback!==box)fallback.hidden=false;});
-  box.prepend(img);
- });
- if(data.aviso)console.warn('Município360 — fotos nacionais:',data.aviso);
+ function applyPhotos(data){
+  const photos=data.fotos||{};
+  document.querySelectorAll('[data-national-photo]').forEach(box=>{
+   const key=box.dataset.nationalPhoto,url=photos[key];
+   if(typeof url!=='string'||!url.startsWith('https://upload.wikimedia.org/')||box.querySelector('img'))return;
+   const fallback=box.querySelector('.national-uf');
+   const img=document.createElement('img');
+   img.src=url;img.alt='Retrato de '+key;img.loading='lazy';img.referrerPolicy='no-referrer';
+   img.addEventListener('load',()=>{box.classList.add('has-photo');if(fallback)fallback.hidden=true;});
+   img.addEventListener('error',()=>{img.remove();box.classList.remove('has-photo');if(fallback)fallback.hidden=false;});
+   box.prepend(img);
+  });
+ }
+ if(!nationalPhotoPromise){
+  const offsets=[0,4,8,12,16,20,24];
+  let next=0;
+  nationalPhotoPromise=Promise.all(Array.from({length:3},async()=>{
+   while(next<offsets.length){
+    const offset=offsets[next++];
+    try{
+     const data=await api('fotos_nacionais.php?offset='+offset);
+     if(state.uf||state.city)return;
+     applyPhotos(data);
+     if(Object.keys(data.ausentes||{}).length)console.info('Retratos sem fonte confirmada:',data.ausentes);
+    }catch(e){console.warn('Fotos nacionais: lote '+offset,e.message);}
+   }
+  }));
+ }
+ await nationalPhotoPromise;
 }
 function resetGovernanceTitles(){
  $('executiveHeading').textContent='Prefeito e administração';
