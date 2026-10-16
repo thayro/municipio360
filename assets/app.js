@@ -296,7 +296,7 @@ function renderUnifiedMedia(){
  $('totalNews').textContent=total;
  $('newsList').innerHTML=origin==='redes'
  ?'<div class="placeholder">As redes sociais disponíveis estão nos links de busca acima. Não há coleta direta de posts autenticados neste momento.</div>'
- :entries.length?entries.slice(0,100).map(n=>'<a class="news-item news-editorial-item" href="'+escapeHtml(n.url)+'" target="_blank" rel="noopener noreferrer"><span class="news-type">'+(n._kind==='mencoes'?'REPERCUSSÃO':'NOTÍCIA')+'</span><div class="news-item-copy"><span class="source">'+escapeHtml(newsPublisher(n))+'</span><h3>'+escapeHtml(n.titulo)+'</h3><div class="metadata">'+escapeHtml(formatDate(n.data))+'</div></div><span class="news-go" aria-hidden="true">↗</span></a>').join('')
+ :entries.length?entries.slice(0,100).map(n=>'<a class="news-item news-editorial-item" href="'+escapeHtml(n.url)+'" target="_blank" rel="noopener noreferrer"><span class="news-type">'+(n._kind==='mencoes'?'REPERCUSSÃO':'NOTÍCIA')+'</span><div class="news-item-copy"><span class="source">Fonte: '+escapeHtml(newsPublisher(n))+'</span><h3>'+escapeHtml(n.titulo)+'</h3><div class="metadata">'+escapeHtml(formatDate(n.data))+'</div></div><span class="news-go" aria-hidden="true">↗</span></a>').join('')
  :'<div class="placeholder">Nenhuma publicação encontrada para este filtro nesta consulta.</div>';
  if(unifiedMedia.failures.length){
   const note=document.createElement('div');note.className='note';note.textContent='Fontes indisponíveis: '+unifiedMedia.failures.join(' | ');$('newsList').append(note);
