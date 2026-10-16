@@ -10,11 +10,11 @@ async function api(path){
 }
 function placeholder(id,msg){$(id).innerHTML='<div class="placeholder">'+escapeHtml(msg)+'</div>'}
 function ufCode(city){return city?.microrregiao?.mesorregiao?.UF?.sigla||city?.['regiao-imediata']?.['regiao-intermediaria']?.UF?.sigla||state.uf}
-function selectUF(uf){if(!uf){resetBrazil();return;}hideMunicipalTooltip();setStatus('Carregando municípios de '+uf+'...', 'loading');state.uf=uf;state.city=null;state.cities=[];resetUnifiedMedia('uf:'+uf);$('ufSelect').value=uf;$('citySelect').disabled=true;$('citySearch').disabled=true;$('citySelect').innerHTML='<option>Carregando municípios...</option>';$('placeTag').textContent=uf+' · selecione o município';$('locationHeading').textContent='Estado: '+uf;$('locationDetails').textContent='Escolha um município para visualizar seus dados.';
+function selectUF(uf){if(!uf){resetBrazil();return;}hideMunicipalTooltip();setStatus('Carregando municípios de '+uf+'...', 'loading');state.uf=uf;state.city=null;state.cities=[];resetUnifiedMedia('uf:'+uf);resetGovernanceTitles();$('ufSelect').value=uf;$('citySelect').disabled=true;$('citySearch').disabled=true;$('citySelect').innerHTML='<option>Carregando municípios...</option>';$('placeTag').textContent=uf+' · selecione o município';$('locationHeading').textContent='Estado: '+uf;$('locationDetails').textContent='Escolha um município para visualizar seus dados.';
 document.querySelectorAll('#mapa .uf').forEach(el=>el.classList.toggle('selected',el.dataset.uf===uf));placeholder('newsList','Selecione um município para notícias locais.');placeholder('contractsList','Selecione um município para licitações locais.');return loadCities(uf).then(()=>{if(state.uf===uf)loadMunicipalMap(uf)});}
 async function loadCities(uf){try{const d=await api('localidades.php?tipo=municipios&uf='+uf);if(state.uf!==uf)return;state.cities=Array.isArray(d.data)?d.data:[];setStatus(state.cities.length+' municípios carregados para '+uf+'. Selecione uma cidade.');$('citySearch').disabled=false;$('citySelect').disabled=false;renderCityOptions();$('totalCities').textContent=String(state.cities.length)+' em '+uf;}catch(e){$('citySelect').innerHTML='<option>Falha ao carregar municípios</option>';$('locationDetails').textContent=e.message;setStatus('Falha na consulta dos municípios: '+e.message,'error')}}
 function renderCityOptions(){const term=$('citySearch').value.toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g,'');const options=state.cities.filter(c=>c.nome.toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g,'').includes(term));const current=state.city?.id||'';$('citySelect').innerHTML='<option value="">Selecione o município ('+options.length+')</option>'+options.map(c=>'<option value="'+c.id+'" '+(String(c.id)===String(current)?'selected':'')+'>'+escapeHtml(c.nome)+'</option>').join('')}
-async function selectCity(id){const city=state.cities.find(c=>String(c.id)===String(id));if(!city)return;state.city=city;setStatus('Município '+city.nome+' selecionado. Consultando notícias e contratações...');$('placeTag').textContent=city.nome+' / '+ufCode(city);$('locationHeading').textContent=city.nome+' — '+ufCode(city);$('locationDetails').textContent='Código IBGE: '+city.id+' · Fontes: IBGE, notícias indexadas e PNCP.';$('ibgeLink').href='https://cidades.ibge.gov.br/brasil/'+city.id+'/panorama';$('prefeitoMeta').textContent='Prefeito atual: ainda não verificado automaticamente. Confira no portal da Prefeitura e no TSE.';$('vereadoresMeta').textContent='Composição atual da Câmara: consulte a fonte institucional; não inferimos vereadores apenas pelos resultados eleitorais.';const q=encodeURIComponent('prefeitura '+city.nome+' '+state.uf);$('govLinks').innerHTML='<a target="_blank" rel="noopener noreferrer" href="https://www.google.com/search?q='+q+'">Localizar prefeitura ↗</a><a target="_blank" rel="noopener noreferrer" href="https://www.google.com/search?q='+encodeURIComponent('câmara municipal '+city.nome+' '+state.uf)+'">Localizar Câmara ↗</a>';highlightMunicipality(String(city.id));resetUnifiedMedia('city:'+city.id);loadGovernance();loadFinance();loadSocial();$('totalNews').textContent='…';$('totalBids').textContent='…';loadNews();loadContracts();}
+async function selectCity(id){const city=state.cities.find(c=>String(c.id)===String(id));if(!city)return;state.city=city;resetGovernanceTitles();setStatus('Município '+city.nome+' selecionado. Consultando notícias e contratações...');$('placeTag').textContent=city.nome+' / '+ufCode(city);$('locationHeading').textContent=city.nome+' — '+ufCode(city);$('locationDetails').textContent='Código IBGE: '+city.id+' · Fontes: IBGE, notícias indexadas e PNCP.';$('ibgeLink').href='https://cidades.ibge.gov.br/brasil/'+city.id+'/panorama';$('prefeitoMeta').textContent='Prefeito atual: ainda não verificado automaticamente. Confira no portal da Prefeitura e no TSE.';$('vereadoresMeta').textContent='Composição atual da Câmara: consulte a fonte institucional; não inferimos vereadores apenas pelos resultados eleitorais.';const q=encodeURIComponent('prefeitura '+city.nome+' '+state.uf);$('govLinks').innerHTML='<a target="_blank" rel="noopener noreferrer" href="https://www.google.com/search?q='+q+'">Localizar prefeitura ↗</a><a target="_blank" rel="noopener noreferrer" href="https://www.google.com/search?q='+encodeURIComponent('câmara municipal '+city.nome+' '+state.uf)+'">Localizar Câmara ↗</a>';highlightMunicipality(String(city.id));resetUnifiedMedia('city:'+city.id);loadGovernance();loadFinance();loadSocial();$('totalNews').textContent='…';$('totalBids').textContent='…';loadNews();loadContracts();}
 
 function representativeSocialLinks(x){
  const q=[x.nome,state.city?.nome||'',state.uf||''].filter(Boolean).join(' ');
@@ -160,7 +160,26 @@ async function loadAutomaticMediaScores(){
 }
 
 
+
+const nationalGovernors=[["AC","Acre","Mailza Assis"],["AL","Alagoas","Paulo Dantas"],["AP","Amapá","Clécio Luís"],["AM","Amazonas","Roberto Cidade"],["BA","Bahia","Jerônimo Rodrigues"],["CE","Ceará","Elmano de Freitas"],["DF","Distrito Federal","Celina Leão"],["ES","Espírito Santo","Ricardo Ferraço"],["GO","Goiás","Daniel Vilela"],["MA","Maranhão","Carlos Brandão"],["MT","Mato Grosso","Otaviano Pivetta"],["MS","Mato Grosso do Sul","Eduardo Riedel"],["MG","Minas Gerais","Mateus Simões"],["PA","Pará","Hana Ghassan"],["PB","Paraíba","Lucas Ribeiro"],["PR","Paraná","Ratinho Junior"],["PE","Pernambuco","Raquel Lyra"],["PI","Piauí","Rafael Fonteles"],["RJ","Rio de Janeiro","Ricardo Couto"],["RN","Rio Grande do Norte","Fátima Bezerra"],["RS","Rio Grande do Sul","Eduardo Leite"],["RO","Rondônia","Marcos Rocha"],["RR","Roraima","Soldado Sampaio"],["SC","Santa Catarina","Jorginho Mello"],["SP","São Paulo","Tarcísio de Freitas"],["SE","Sergipe","Fábio Mitidieri"],["TO","Tocantins","Wanderlei Barbosa"]];
+function renderNationalGovernance(){
+ if(state.city||state.uf)return;
+ mediaGeneration++;
+ $('executiveHeading').textContent='Presidência da República';
+ $('legislativeHeading').textContent='Governadores — 26 estados e DF';
+ $('prefeitoMeta').textContent='Presidente em exercício · mandato 2023–2026';
+ $('vereadoresMeta').textContent='Referência nominal: setembro de 2026. Alterações e interinidades devem ser confirmadas em fontes oficiais.';
+ $('prefeitoCards').innerHTML='<article class="national-president"><span class="national-avatar" aria-hidden="true">♙</span><div><strong>Luiz Inácio Lula da Silva</strong><small>Presidente da República</small><a href="https://www.gov.br/planalto/pt-br" target="_blank" rel="noopener noreferrer">Consultar Presidência ↗</a></div></article>';
+ $('vereadoresCards').innerHTML=nationalGovernors.map(([uf,estado,nome])=>'<article class="national-governor"><span class="national-uf">'+escapeHtml(uf)+'</span><div><strong>'+escapeHtml(nome)+'</strong><small>'+escapeHtml(estado)+'</small></div><a href="https://www.google.com/search?q='+encodeURIComponent('site:gov.br governador '+estado+' 2026')+'" target="_blank" rel="noopener noreferrer" aria-label="Consultar governo de '+escapeHtml(estado)+'">↗</a></article>').join('');
+ $('govLinks').innerHTML='<a href="https://www.gov.br/planalto/pt-br" target="_blank" rel="noopener noreferrer">Presidência ↗</a><a href="https://www.conass.org.br/" target="_blank" rel="noopener noreferrer">Informações estaduais ↗</a><a href="https://nexoeconomico.com/politica/governadores-do-brasil-2026/" target="_blank" rel="noopener noreferrer">Fonte da lista (13/09/2026) ↗</a>';
+}
+function resetGovernanceTitles(){
+ $('executiveHeading').textContent='Prefeito e administração';
+ $('legislativeHeading').textContent='Vereadores e Câmara';
+}
+
 async function loadGovernance(){
+ resetGovernanceTitles();
  const city=state.city;if(!city)return;
  mediaGeneration++;
  const mayorCards=$('prefeitoCards'),councilCards=$('vereadoresCards');
@@ -254,7 +273,7 @@ function resetBrazil(){
  $('prefeitoMeta').textContent='Selecione um município para consultar os representantes.';
  $('vereadoresMeta').textContent='Selecione um município para consultar a Câmara.';
  $('govLinks').innerHTML='';
- restoreBrazil();
+ restoreBrazil();renderNationalGovernance();
  setStatus('Visão nacional restaurada. Selecione um estado no mapa ou no filtro.');
  loadBrazilFeeds();
 }
@@ -301,6 +320,7 @@ $('ufSelect').addEventListener('change',e=>{geoEpoch++;selectUF(e.target.value)}
 $('newsTopicSelect').addEventListener('change',e=>{state.topic=e.target.value;if(state.city)loadNews();else loadBrazilFeeds()});document.querySelectorAll('.nav').forEach(n=>n.addEventListener('click',()=>showSection(n.dataset.section)));
 async function loadBrazilFeeds(){
  if(state.city)return;
+ if(!state.uf)renderNationalGovernance();
  resetUnifiedMedia('brasil');placeholder('newsList','Consultando notícias municipais de todo o Brasil...');placeholder('contractsList','Consultando licitações municipais nacionais...');
  const results=await Promise.allSettled([api('brasil_noticias.php'),api('brasil_contratacoes.php')]);
  if(state.city)return;
