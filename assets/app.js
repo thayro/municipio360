@@ -14,7 +14,7 @@ function selectUF(uf){if(!uf){resetBrazil();return;}hideMunicipalTooltip();setSt
 document.querySelectorAll('#mapa .uf').forEach(el=>el.classList.toggle('selected',el.dataset.uf===uf));placeholder('newsList','Selecione um município para notícias locais.');placeholder('contractsList','Selecione um município para licitações locais.');return loadCities(uf).then(()=>{if(state.uf===uf)loadMunicipalMap(uf)});}
 async function loadCities(uf){try{const d=await api('localidades.php?tipo=municipios&uf='+uf);if(state.uf!==uf)return;state.cities=Array.isArray(d.data)?d.data:[];setStatus(state.cities.length+' municípios carregados para '+uf+'. Selecione uma cidade.');$('citySearch').disabled=false;$('citySelect').disabled=false;renderCityOptions();$('totalCities').textContent=String(state.cities.length)+' em '+uf;}catch(e){$('citySelect').innerHTML='<option>Falha ao carregar municípios</option>';$('locationDetails').textContent=e.message;setStatus('Falha na consulta dos municípios: '+e.message,'error')}}
 function renderCityOptions(){const term=$('citySearch').value.toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g,'');const options=state.cities.filter(c=>c.nome.toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g,'').includes(term));const current=state.city?.id||'';$('citySelect').innerHTML='<option value="">Selecione o município ('+options.length+')</option>'+options.map(c=>'<option value="'+c.id+'" '+(String(c.id)===String(current)?'selected':'')+'>'+escapeHtml(c.nome)+'</option>').join('')}
-async function selectCity(id){const city=state.cities.find(c=>String(c.id)===String(id));if(!city)return;state.city=city;setStatus('Município '+city.nome+' selecionado. Consultando notícias e contratações...');$('placeTag').textContent=city.nome+' / '+ufCode(city);$('locationHeading').textContent=city.nome+' — '+ufCode(city);$('locationDetails').textContent='Código IBGE: '+city.id+' · Fontes: IBGE, notícias indexadas e PNCP.';$('ibgeLink').href='https://cidades.ibge.gov.br/brasil/'+city.id+'/panorama';$('prefeitoMeta').textContent='Prefeito atual: ainda não verificado automaticamente. Confira no portal da Prefeitura e no TSE.';$('vereadoresMeta').textContent='Composição atual da Câmara: consulte a fonte institucional; não inferimos vereadores apenas pelos resultados eleitorais.';const q=encodeURIComponent('prefeitura '+city.nome+' '+state.uf);$('govLinks').innerHTML='<a target="_blank" rel="noopener noreferrer" href="https://www.google.com/search?q='+q+'">Localizar prefeitura ↗</a><a target="_blank" rel="noopener noreferrer" href="https://www.google.com/search?q='+encodeURIComponent('câmara municipal '+city.nome+' '+state.uf)+'">Localizar Câmara ↗</a>';highlightMunicipality(String(city.id));loadGovernance();loadFinance();loadSocial();$('totalNews').textContent='…';$('totalBids').textContent='…';loadNews();loadContracts();}
+async function selectCity(id){const city=state.cities.find(c=>String(c.id)===String(id));if(!city)return;state.city=city;setStatus('Município '+city.nome+' selecionado. Consultando notícias e contratações...');$('placeTag').textContent=city.nome+' / '+ufCode(city);$('locationHeading').textContent=city.nome+' — '+ufCode(city);$('locationDetails').textContent='Código IBGE: '+city.id+' · Fontes: IBGE, notícias indexadas e PNCP.';$('ibgeLink').href='https://cidades.ibge.gov.br/brasil/'+city.id+'/panorama';$('prefeitoMeta').textContent='Prefeito atual: ainda não verificado automaticamente. Confira no portal da Prefeitura e no TSE.';$('vereadoresMeta').textContent='Composição atual da Câmara: consulte a fonte institucional; não inferimos vereadores apenas pelos resultados eleitorais.';const q=encodeURIComponent('prefeitura '+city.nome+' '+state.uf);$('govLinks').innerHTML='<a target="_blank" rel="noopener noreferrer" href="https://www.google.com/search?q='+q+'">Localizar prefeitura ↗</a><a target="_blank" rel="noopener noreferrer" href="https://www.google.com/search?q='+encodeURIComponent('câmara municipal '+city.nome+' '+state.uf)+'">Localizar Câmara ↗</a>';highlightMunicipality(String(city.id));loadCityMediaScore();loadGovernance();loadFinance();loadSocial();$('totalNews').textContent='…';$('totalBids').textContent='…';loadNews();loadContracts();}
 
 function representativeSocialLinks(x){
  const q=[x.nome,state.city?.nome||'',state.uf||''].filter(Boolean).join(' ');
@@ -81,6 +81,49 @@ document.addEventListener('click',event=>{
  profileReturnFocus=trigger;
  if(!dialog.open)dialog.showModal();
 });
+
+
+// Tom da cobertura municipal; não mede desempenho, aprovação ou sentimento de redes sociais.
+let cityScoreRequest=0;
+async function loadCityMediaScore(){
+ const city=state.city,box=$('cityScore');if(!city||!box)return;
+ const request=++cityScoreRequest,cityId=String(city.id),meter=$('cityScoreMeter');
+ box.hidden=false;$('cityScoreValue').textContent='…';$('cityScoreStatus').textContent='Consultando notícias…';
+ $('cityScoreSources').textContent='Índice experimental de manchetes; redes sociais ainda não são medidas.';
+ meter.style.setProperty('--score-progress','0%');meter.style.setProperty('--score-color','#8091a7');
+ try{
+  const data=await api('social.php?id='+encodeURIComponent(cityId));
+  if(request!==cityScoreRequest||String(state.city?.id)!==cityId)return;
+  const unique=new Map(),sources=new Set();
+  (data.noticias_indexadas||[]).forEach(item=>{
+   const title=String(item.titulo||'').trim(),link=String(item.url||'');
+   if(!title||!/^https?:\\/\\//i.test(link))return;
+   const key=title.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLocaleLowerCase('pt-BR');
+   if(unique.has(key))return;
+   unique.set(key,item);
+   let source=String(item.fonte||'').trim();
+   if(!source){try{source=new URL(link).hostname.replace(/^www\\./,'');}catch{}}
+   if(source)sources.add(source.toLocaleLowerCase('pt-BR'));
+  });
+  const items=[...unique.values()],enough=items.length>=5&&sources.size>=3;
+  if(enough){
+   const points=Math.round(500+items.map(item=>scoreHeadline(item.titulo)).reduce((a,b)=>a+b,0)/items.length*350);
+   const color=points<350?'#f87171':points<500?'#fb923c':points<650?'#60a5fa':'#4ade80';
+   $('cityScoreValue').textContent=String(points);
+   $('cityScoreStatus').textContent='Tom das manchetes indexadas (até 30 dias)';
+   meter.style.setProperty('--score-progress',(points/1000*100).toFixed(1)+'%');
+   meter.style.setProperty('--score-color',color);
+  }else{
+   $('cityScoreValue').textContent='N/D';
+   $('cityScoreStatus').textContent='Dados insuficientes para calcular';
+  }
+  $('cityScoreSources').textContent=items.length+' matérias de '+sources.size+' fontes distintas. Exige ao menos 5 matérias e 3 fontes. Não inclui métricas de redes sociais.';
+ }catch(e){
+  if(request!==cityScoreRequest||String(state.city?.id)!==cityId)return;
+  $('cityScoreValue').textContent='N/D';$('cityScoreStatus').textContent='Consulta indisponível';
+  $('cityScoreSources').textContent='Não foi possível consultar as manchetes agora.';
+ }
+}
 
 // Classificação conservadora de linguagem de títulos. Não decide a veracidade dos fatos.
 function scoreHeadline(text){
