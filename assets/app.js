@@ -59,7 +59,7 @@ async function inspectRepresentativeMedia(panel){
   });
   const items=[...unique.values()];
   const meter=panel.querySelector('.rep-score-meter');
-  let info='';const labels=items.length+' matérias, '+domains.size+' fontes distintas (janela de até 7 dias).';
+  let info='';const labels=items.length+' matérias, '+domains.size+' fontes distintas (busca de até 30 dias).';
   if(items.length>=5&&domains.size>=3){
    const tones=items.map(x=>scoreHeadline(x.titulo));
    const points=Math.round(500+tones.reduce((a,b)=>a+b,0)/tones.length*350);
@@ -68,14 +68,16 @@ async function inspectRepresentativeMedia(panel){
    meter.style.setProperty('--score-progress',(points/1000*100).toFixed(1)+'%');
    info='<small>'+labels+' Pontuação baseada somente em palavras das manchetes; pode classificar mal contexto, ironia e citações.</small>';
   }else{
-   meter.querySelector('strong').textContent='—';
+   meter.querySelector('strong').textContent='N/D';
+   meter.setAttribute('aria-label','Dados insuficientes para calcular o indicador');
    info='<small>Dados insuficientes para uma pontuação: '+labels+' Mínimo de 5 matérias e 3 fontes independentes.</small>';
   }
   const notice=card.querySelector('.rep-score-notice');
   notice.innerHTML=info+(items.length?'<details><summary>Ver manchetes e fontes</summary>'+items.slice(0,15).map(x=>'<a href="'+escapeHtml(x.url)+'" target="_blank" rel="noopener noreferrer">'+escapeHtml(x.titulo||'Notícia')+' ↗</a>').join('')+'</details>':'<small>Não foram encontradas matérias; isso não representa avaliação negativa.</small>');
-  if(status)status.textContent='Consulta automática concluída';
+  if(status)status.textContent=items.length>=5&&domains.size>=3?'Calculado automaticamente':'Sem dados suficientes';
  }catch(e){
   if(status)status.textContent='Fonte indisponível';
+  const meter=panel.querySelector('.rep-score-meter strong');if(meter)meter.textContent='N/D';
   card.querySelector('.rep-score-notice').textContent='Não foi possível consultar as fontes: '+e.message;
  }
 }
