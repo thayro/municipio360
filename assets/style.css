@@ -390,3 +390,5 @@ html,body{background:#0b1525;color:var(--paper)}body{background-image:radial-gra
 .city-social-items{display:flex;flex-direction:column;gap:8px;max-height:210px;overflow-y:auto}
 .city-social-items a{font-size:11px;line-height:1.45;color:#96d6ff;overflow-wrap:anywhere;text-decoration:none}
 .city-social-items a:hover{text-decoration:underline}
+
+.city-social-stat{display:flex;justify-content:space-between;gap:12px;font-size:11px;color:#c6dbed;padding:5px 0;border-bottom:1px solid #2b4965}.city-social-stat strong{color:#c2f1ff;font-size:13px}.city-social-tags{display:flex;flex-wrap:wrap;gap:6px}.city-social-tags span{font-size:10px;background:#244762;padding:5px 8px;border-radius:7px;color:#aee4ff}
