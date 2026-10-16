@@ -11,7 +11,7 @@ async function api(path){
 function placeholder(id,msg){$(id).innerHTML='<div class="placeholder">'+escapeHtml(msg)+'</div>'}
 function ufCode(city){return city?.microrregiao?.mesorregiao?.UF?.sigla||city?.['regiao-imediata']?.['regiao-intermediaria']?.UF?.sigla||state.uf}
 function selectUF(uf){if(!uf){resetBrazil();return;}hideMunicipalTooltip();setStatus('Carregando municípios de '+uf+'...', 'loading');state.uf=uf;state.city=null;state.cities=[];$('ufSelect').value=uf;$('citySelect').disabled=true;$('citySearch').disabled=true;$('citySelect').innerHTML='<option>Carregando municípios...</option>';$('placeTag').textContent=uf+' · selecione o município';$('locationHeading').textContent='Estado: '+uf;$('locationDetails').textContent='Escolha um município para visualizar seus dados.';
-document.querySelectorAll('#mapa .uf').forEach(el=>el.classList.toggle('selected',el.dataset.uf===uf));placeholder('newsList','Selecione um município para notícias locais.');placeholder('contractsList','Selecione um município para licitações locais.');loadCities(uf).then(()=>{if(state.uf===uf)loadMunicipalMap(uf)});}
+document.querySelectorAll('#mapa .uf').forEach(el=>el.classList.toggle('selected',el.dataset.uf===uf));placeholder('newsList','Selecione um município para notícias locais.');placeholder('contractsList','Selecione um município para licitações locais.');return loadCities(uf).then(()=>{if(state.uf===uf)loadMunicipalMap(uf)});}
 async function loadCities(uf){try{const d=await api('localidades.php?tipo=municipios&uf='+uf);if(state.uf!==uf)return;state.cities=Array.isArray(d.data)?d.data:[];setStatus(state.cities.length+' municípios carregados para '+uf+'. Selecione uma cidade.');$('citySearch').disabled=false;$('citySelect').disabled=false;renderCityOptions();$('totalCities').textContent=String(state.cities.length)+' em '+uf;}catch(e){$('citySelect').innerHTML='<option>Falha ao carregar municípios</option>';$('locationDetails').textContent=e.message;setStatus('Falha na consulta dos municípios: '+e.message,'error')}}
 function renderCityOptions(){const term=$('citySearch').value.toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g,'');const options=state.cities.filter(c=>c.nome.toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g,'').includes(term));const current=state.city?.id||'';$('citySelect').innerHTML='<option value="">Selecione o município ('+options.length+')</option>'+options.map(c=>'<option value="'+c.id+'" '+(String(c.id)===String(current)?'selected':'')+'>'+escapeHtml(c.nome)+'</option>').join('')}
 async function selectCity(id){const city=state.cities.find(c=>String(c.id)===String(id));if(!city)return;state.city=city;setStatus('Município '+city.nome+' selecionado. Consultando notícias e contratações...');$('placeTag').textContent=city.nome+' / '+ufCode(city);$('locationHeading').textContent=city.nome+' — '+ufCode(city);$('locationDetails').textContent='Código IBGE: '+city.id+' · Fontes: IBGE, notícias indexadas e PNCP.';$('ibgeLink').href='https://cidades.ibge.gov.br/brasil/'+city.id+'/panorama';$('prefeitoMeta').textContent='Prefeito atual: ainda não verificado automaticamente. Confira no portal da Prefeitura e no TSE.';$('vereadoresMeta').textContent='Composição atual da Câmara: consulte a fonte institucional; não inferimos vereadores apenas pelos resultados eleitorais.';const q=encodeURIComponent('prefeitura '+city.nome+' '+state.uf);$('govLinks').innerHTML='<a target="_blank" rel="noopener noreferrer" href="https://www.google.com/search?q='+q+'">Localizar prefeitura ↗</a><a target="_blank" rel="noopener noreferrer" href="https://www.google.com/search?q='+encodeURIComponent('câmara municipal '+city.nome+' '+state.uf)+'">Localizar Câmara ↗</a>';highlightMunicipality(String(city.id));loadGovernance();loadFinance();loadSocial();$('totalNews').textContent='…';$('totalBids').textContent='…';loadNews();loadContracts();}
@@ -102,7 +102,7 @@ function renderMunicipalGeojson(geo,uf){
 async function loadMunicipalMap(uf){const request=++mapRequest;$('mapMode').textContent='Carregando malha dos municípios de '+uf+'…';$('mapBack').hidden=false;
  try{let d=await api('malha.php?uf='+encodeURIComponent(uf));if(request!==mapRequest)return;renderMunicipalGeojson(d.data,uf);$('mapMode').textContent='Mapa municipal de '+uf+' · clique para selecionar uma cidade';}
  catch(e){if(request!==mapRequest)return;$('mapMode').textContent='Malha municipal indisponível: '+e.message+' · use a lista acima';$('svgWrap').innerHTML=brasilMarkup;wireMap()}}
-function wireMap(){document.querySelectorAll('#mapa .uf').forEach(el=>{el.classList.add('region-'+(UF_REGION[el.dataset.uf]||'centro'));el.setAttribute('tabindex','0');el.setAttribute('role','button');const fn=()=>selectUF(el.dataset.uf);el.addEventListener('click',fn);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fn()}})})}
+function wireMap(){document.querySelectorAll('#mapa .uf').forEach(el=>{el.classList.add('region-'+(UF_REGION[el.dataset.uf]||'centro'));el.setAttribute('tabindex','0');el.setAttribute('role','button');const fn=()=>{geoEpoch++;selectUF(el.dataset.uf)};el.addEventListener('click',fn);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fn()}})})}
 const appLayout=$('appLayout'),sidebarToggle=$('sidebarToggle'),sidebarBackdrop=$('sidebarBackdrop');
 const mobileSidebar=()=>window.matchMedia('(max-width:700px)').matches;
 function syncSidebarAria(){const open=mobileSidebar()?appLayout.classList.contains('sidebar-open'):!appLayout.classList.contains('sidebar-collapsed');sidebarToggle.setAttribute('aria-expanded',String(open));sidebarToggle.setAttribute('aria-label',open?'Recolher menu lateral':'Abrir menu lateral');sidebarBackdrop.setAttribute('aria-hidden',String(!open));}
@@ -115,7 +115,7 @@ if(mobileSidebar())appLayout.classList.add('sidebar-collapsed');
 syncSidebarAria();
 $('mapBack').addEventListener('click',resetBrazil);
 function showSection(sec){if(window.matchMedia('(max-width:700px)').matches)setSidebarOpen(false);state.section=sec;document.querySelectorAll('.nav').forEach(n=>n.classList.toggle('active',n.dataset.section===sec));const map={visao:'.map-panel',noticias:'.news-panel',contratacoes:'.contracts-panel',gestao:'.governance-panel'};document.querySelector(map[sec])?.scrollIntoView({behavior:'smooth',block:'start'});}
-$('ufSelect').addEventListener('change',e=>selectUF(e.target.value));$('citySearch').addEventListener('input',renderCityOptions);$('citySelect').addEventListener('change',e=>selectCity(e.target.value));$('refresh').addEventListener('click',()=>{if(state.city){loadNews();loadContracts();loadGovernance();loadFinance();loadSocial()}else{loadStates();loadBrazilFeeds()}});document.querySelectorAll('#mapa .uf').forEach(el=>{el.classList.add('region-'+(UF_REGION[el.dataset.uf]||'centro'));el.setAttribute('tabindex','0');el.setAttribute('role','button');const fn=()=>selectUF(el.dataset.uf);el.addEventListener('click',fn);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fn()}})});
+$('ufSelect').addEventListener('change',e=>{geoEpoch++;selectUF(e.target.value)});$('citySearch').addEventListener('input',renderCityOptions);$('citySelect').addEventListener('change',e=>{geoEpoch++;selectCity(e.target.value)});$('refresh').addEventListener('click',()=>{if(state.city){loadNews();loadContracts();loadGovernance();loadFinance();loadSocial()}else{loadStates();loadBrazilFeeds()}});document.querySelectorAll('#mapa .uf').forEach(el=>{el.classList.add('region-'+(UF_REGION[el.dataset.uf]||'centro'));el.setAttribute('tabindex','0');el.setAttribute('role','button');const fn=()=>selectUF(el.dataset.uf);el.addEventListener('click',fn);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fn()}})});
 document.querySelectorAll('#filters .pill').forEach(b=>b.addEventListener('click',()=>{state.topic=b.dataset.topic;document.querySelectorAll('#filters .pill').forEach(x=>x.classList.toggle('chosen',x===b));if(state.city)loadNews();else loadBrazilFeeds()}));document.querySelectorAll('.nav').forEach(n=>n.addEventListener('click',()=>showSection(n.dataset.section)));
 async function loadBrazilFeeds(){
  if(state.city)return;
@@ -142,6 +142,54 @@ $('socialPerson').addEventListener('change',loadSocial);
 $('financeYear').addEventListener('change',loadFinance);
 
 window.addEventListener('error',e=>{setStatus('Erro na interface: '+(e.message||'Falha desconhecida')+'. Consulte o console do navegador.','error')});
-loadStates();
+
+let geoEpoch=0;
+function plainName(value){
+ return String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').replace(/[^a-z0-9]/g,'');
+}
+async function locateVisitor(){
+ const ticket=++geoEpoch;
+ const btn=$('locateMe');
+ if(!navigator.geolocation||!window.isSecureContext){
+  setStatus('Localização indisponível neste navegador. Selecione o município manualmente.','error');return;
+ }
+ btn.disabled=true;
+ setStatus('Aguardando permissão para localizar seu município...','loading');
+ try{
+  const pos=await new Promise((resolve,reject)=>navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:false,timeout:9000,maximumAge:300000}));
+  if(ticket!==geoEpoch)return;
+  const {latitude,longitude}=pos.coords;
+  const url='https://nominatim.openstreetmap.org/reverse?format=jsonv2&addressdetails=1&zoom=10&lat='+encodeURIComponent(latitude.toFixed(5))+'&lon='+encodeURIComponent(longitude.toFixed(5));
+  const reply=await fetch(url,{headers:{Accept:'application/json'}});
+  if(!reply.ok)throw new Error('Serviço de localização indisponível (HTTP '+reply.status+')');
+  const json=await reply.json();
+  if(ticket!==geoEpoch)return;
+  const address=json.address||{};
+  if(address.country_code!=='br')throw new Error('Localização fora do Brasil.');
+  let uf=(address['ISO3166-2-lvl4']||'').replace(/^BR-/i,'').toUpperCase();
+  if(!/^[A-Z]{2}$/.test(uf)){
+   const stateName=plainName(address.state);
+   const opt=Array.from($('ufSelect').options).find(o=>plainName(o.textContent)===stateName);
+   uf=opt?.value||'';
+  }
+  if(!/^[A-Z]{2}$/.test(uf))throw new Error('Não foi possível identificar o estado.');
+  const cityName=address.city||address.town||address.village||address.municipality||address.county||'';
+  await selectUF(uf);
+  if(ticket!==geoEpoch)return;
+  const city=state.cities.find(x=>plainName(x.nome)===plainName(cityName));
+  if(!city){
+   setStatus('Estado '+uf+' localizado. Selecione seu município na lista (nome não encontrado na consulta).');
+   return;
+  }
+  $('citySelect').value=String(city.id);
+  selectCity(city.id);
+  setStatus('Localização aproximada: '+city.nome+' / '+uf+'. Dados carregados.');
+ }catch(e){
+  if(ticket===geoEpoch)setStatus('Não foi possível localizar automaticamente: '+(e.code===1?'permissão não concedida':e.message||'falha de localização')+'. Você pode escolher o município manualmente.','error');
+ }finally{btn.disabled=false;}
+}
+$('locateMe').addEventListener('click',locateVisitor);
+
+loadStates().then(()=>{if(!state.uf)locateVisitor();});
 loadBrazilFeeds();
 })();
