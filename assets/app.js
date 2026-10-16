@@ -175,40 +175,24 @@ function renderNationalGovernance(){
 
  loadNationalPhotos();}
 
-let nationalPhotoCache=null;
 let nationalPhotoPromise=null;
 async function loadNationalPhotos(){
- const names=['Luiz Inácio Lula da Silva',...nationalGovernors.map(x=>x[2])];
- if(!nationalPhotoPromise){
-  nationalPhotoPromise=(async()=>{
-   const endpoint=new URL('https://pt.wikipedia.org/w/api.php');
-   endpoint.search=new URLSearchParams({action:'query',format:'json',origin:'*',redirects:'1',prop:'pageimages',piprop:'thumbnail',pithumbsize:'180',titles:names.join('|')}).toString();
-   const response=await fetch(endpoint.toString(),{mode:'cors'});
-   if(!response.ok)throw new Error('Wikipedia indisponível');
-   const data=await response.json();
-   const normalize=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
-   const redirects=new Map((data.query?.redirects||[]).map(x=>[normalize(x.from),normalize(x.to)]));
-   const pages=new Map(Object.values(data.query?.pages||{}).map(x=>[normalize(x.title),x]));
-   const found=new Map();
-   for(const name of names){
-    const k=normalize(name),page=pages.get(redirects.get(k)||k);
-    const photo=page?.thumbnail?.source||'';
-    try{const url=new URL(photo);if(url.protocol==='https:'&&url.hostname==='upload.wikimedia.org')found.set(name,photo);}catch{}
-   }
-   return found;
-  })().catch(()=>new Map());
- }
- nationalPhotoCache=await nationalPhotoPromise;
+ const selected=document.querySelectorAll('[data-national-photo]');
+ if(!selected.length)return;
+ if(!nationalPhotoPromise)nationalPhotoPromise=api('fotos_nacionais.php').catch(e=>({fotos:{},aviso:e.message}));
+ const data=await nationalPhotoPromise;
  if(state.city||state.uf)return;
- document.querySelectorAll('[data-national-photo]').forEach(box=>{
-  const url=nationalPhotoCache.get(box.dataset.nationalPhoto);
-  if(!url||box.querySelector('img'))return;
+ const photos=data.fotos||{};
+ selected.forEach(box=>{
+  const key=box.dataset.nationalPhoto,url=photos[key];
+  if(typeof url!=='string'||!url.startsWith('https://upload.wikimedia.org/')||box.querySelector('img'))return;
   const img=document.createElement('img');
-  img.src=url;img.alt='Retrato de '+box.dataset.nationalPhoto;img.loading='lazy';img.referrerPolicy='no-referrer';
-  img.addEventListener('load',()=>{box.classList.add('has-photo');box.removeAttribute('aria-label');});
+  img.src=url;img.alt='Retrato de '+key;img.loading='lazy';img.referrerPolicy='no-referrer';
+  img.addEventListener('load',()=>box.classList.add('has-photo'));
   img.addEventListener('error',()=>{img.remove();box.classList.remove('has-photo')});
   box.append(img);
  });
+ if(data.aviso)console.info('Município360 — fotos nacionais:',data.aviso);
 }
 function resetGovernanceTitles(){
  $('executiveHeading').textContent='Prefeito e administração';
