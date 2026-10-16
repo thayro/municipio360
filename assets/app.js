@@ -549,34 +549,8 @@ async function locateVisitor(){
 }
 $('locateMe').addEventListener('click',locateVisitor);
 
-// Ranking lateral oficial: população residente por UF no Censo 2022 (IBGE/SIDRA).
-async function loadMapPopulationRanking(){
- const list=$('mapRankingList');
- if(!list)return;
- const cacheKey='municipio360-ranking-pop-2022-v1';
- let rows=null;
- try{const cached=JSON.parse(sessionStorage.getItem(cacheKey)||'null');if(Array.isArray(cached)&&cached.length===5)rows=cached;}catch{}
- if(!rows){
-  try{
-   const url='https://servicodados.ibge.gov.br/api/v3/agregados/4714/periodos/2022/variaveis/93?localidades=N3%5Ball%5D';
-   const response=await fetch(url,{headers:{Accept:'application/json'}});
-   if(!response.ok)throw Error('IBGE HTTP '+response.status);
-   const data=await response.json();
-   const localities=data?.[0]?.resultados?.[0]?.series||[];
-   const ufCodes={'11':'RO','12':'AC','13':'AM','14':'RR','15':'PA','16':'AP','17':'TO','21':'MA','22':'PI','23':'CE','24':'RN','25':'PB','26':'PE','27':'AL','28':'SE','29':'BA','31':'MG','32':'ES','33':'RJ','35':'SP','41':'PR','42':'SC','43':'RS','50':'MS','51':'MT','52':'GO','53':'DF'};
-   rows=localities.map(item=>({nome:item.localidade?.nome||'',uf:ufCodes[String(item.localidade?.id)]||'',valor:Number(item.serie?.['2022'])})).filter(x=>x.uf&&Number.isFinite(x.valor)&&x.valor>0).sort((a,b)=>b.valor-a.valor).slice(0,5);
-   if(rows.length!==5)throw Error('Resposta IBGE incompleta');
-   try{sessionStorage.setItem(cacheKey,JSON.stringify(rows))}catch{}
-  }catch(err){list.innerHTML='<li>Dados indisponíveis no momento.</li>';console.warn('[Município360/Ranking] IBGE:',err);return;}
- }
- const max=rows[0].valor;
- list.innerHTML=rows.map((item,i)=>'<li><button type="button" class="map-ranking-item" data-ranking-uf="'+escapeHtml(item.uf)+'" title="Explorar '+escapeHtml(item.nome)+'"><span class="map-ranking-row"><b>'+(i+1)+'. '+escapeHtml(item.nome)+'</b><strong>'+item.valor.toLocaleString('pt-BR')+'</strong></span><span class="map-ranking-bar"><span style="width:'+Math.round(item.valor/max*100)+'%"></span></span></button></li>').join('');
- list.querySelectorAll('[data-ranking-uf]').forEach(button=>button.addEventListener('click',()=>selectUF(button.dataset.rankingUf)));
-}
-
 // Conecta os eventos do mapa nacional também na primeira abertura da página.
 wireMap();
-loadMapPopulationRanking();
 loadStates();
 loadBrazilFeeds();
 })();
