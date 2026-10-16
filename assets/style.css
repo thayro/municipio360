@@ -116,3 +116,6 @@ html,body{background:#0b1525;color:var(--paper)}body{background-image:radial-gra
   .main > header .header-title h1{font-size:clamp(22px,6vw,29px)}
   .main > header .header-actions{grid-column:1/-1;grid-row:2;justify-content:space-between}
 }
+
+/* Fallback da fotografia eleitoral somente se a imagem falhar */
+.official-person .person-avatar[hidden]{display:none!important}
