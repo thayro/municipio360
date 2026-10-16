@@ -178,24 +178,27 @@ function renderNationalGovernance(){
 
 let nationalPhotoPromise=null;
 async function loadNationalPhotos(){
- if(!document.querySelector('[data-national-photo]'))return;
+ if(!document.querySelector('[data-national-photo]')){console.warn('[Município360/Fotos] Nenhum cartão nacional localizado no DOM.');return;}
+ console.groupCollapsed('[Município360/Fotos] Diagnóstico de carregamento');console.info('Cartões encontrados:',document.querySelectorAll('[data-national-photo]').length);console.groupEnd();
  function applyPhotos(data){
   const photos=data.fotos||{};
+  console.info('[Município360/Fotos] API retornou',Object.keys(photos).length,'foto(s); consultados:',data.consultados??'não informado','ausentes:',data.ausentes||{},'aviso:',data.aviso||'nenhum');
   document.querySelectorAll('[data-national-photo]').forEach(box=>{
    const key=box.dataset.nationalPhoto,url=photos[key];
-   if(typeof url!=='string'||!url.startsWith('https://upload.wikimedia.org/')||box.querySelector('img'))return;
+   if(box.querySelector('img'))return;
+   if(typeof url!=='string'||!url.startsWith('https://upload.wikimedia.org/')){console.warn('[Município360/Fotos] Sem URL válida:',key,url||'(vazio)');return;}
    const fallback=box.querySelector('.national-uf');
    const img=document.createElement('img');
    img.src=url;img.alt='Retrato de '+key;img.loading='lazy';img.referrerPolicy='no-referrer';
-   img.addEventListener('load',()=>{box.classList.add('has-photo');if(fallback)fallback.hidden=true;});
-   img.addEventListener('error',()=>{img.remove();box.classList.remove('has-photo');if(fallback)fallback.hidden=false;});
+   img.addEventListener('load',()=>{box.classList.add('has-photo');if(fallback)fallback.hidden=true;console.info('[Município360/Fotos] Imagem carregada:',key);});
+   img.addEventListener('error',()=>{console.error('[Município360/Fotos] Erro ao carregar imagem:',key,'URL:',url);img.remove();box.classList.remove('has-photo');if(fallback)fallback.hidden=false;});
    box.prepend(img);
   });
  }
  if(!nationalPhotoPromise){
   const offsets=[0,4,8,12,16,20,24];
   let next=0;
-  const legacy=api('fotos_nacionais.php?legado=1').then(data=>{if(!state.uf&&!state.city)applyPhotos(data)}).catch(e=>console.warn('Cache anterior de fotos:',e.message));
+  const legacy=api('fotos_nacionais.php?legado=1').then(data=>{if(!state.uf&&!state.city)applyPhotos(data)}).catch(e=>console.error('[Município360/Fotos] Erro no cache anterior:',e.message));
   nationalPhotoPromise=Promise.all([legacy,...Array.from({length:3},async()=>{
    while(next<offsets.length){
     const offset=offsets[next++];
@@ -204,7 +207,7 @@ async function loadNationalPhotos(){
      if(state.uf||state.city)return;
      applyPhotos(data);
      if(Object.keys(data.ausentes||{}).length)console.info('Retratos sem fonte confirmada:',data.ausentes);
-    }catch(e){console.warn('Fotos nacionais: lote '+offset,e.message);}
+    }catch(e){console.error('[Município360/Fotos] Falha na API, lote '+offset+':',e.message);}
    }
   })]);
  }
