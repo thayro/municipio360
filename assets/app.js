@@ -170,7 +170,7 @@ function renderNationalGovernance(){
  $('prefeitoMeta').textContent='Presidente em exercício · mandato 2023–2026';
  $('vereadoresMeta').textContent='Referência nominal: setembro de 2026. Alterações e interinidades devem ser confirmadas em fontes oficiais.';
  $('prefeitoCards').innerHTML='<article class="national-president"><span class="national-avatar" data-national-photo="Luiz Inácio Lula da Silva" aria-label="Foto indisponível">♙</span><div><strong>Luiz Inácio Lula da Silva</strong><small>Presidente da República</small><a href="https://www.gov.br/planalto/pt-br" target="_blank" rel="noopener noreferrer">Consultar Presidência ↗</a></div></article>';
- $('vereadoresCards').innerHTML=nationalGovernors.map(([uf,estado,nome])=>'<article class="national-governor"><span class="national-uf">'+escapeHtml(uf)+'</span><div><strong>'+escapeHtml(nome)+'</strong><small>'+escapeHtml(estado)+'</small></div><a href="https://www.google.com/search?q='+encodeURIComponent('site:gov.br governador '+estado+' 2026')+'" target="_blank" rel="noopener noreferrer" aria-label="Consultar governo de '+escapeHtml(estado)+'">↗</a></article>').join('');
+ $('vereadoresCards').innerHTML=nationalGovernors.map(([uf,estado,nome])=>'<article class="national-governor"><span class="national-governor-photo" data-national-photo="'+escapeHtml(nome)+'" aria-label="Foto indisponível"><span class="national-uf">'+escapeHtml(uf)+'</span></span><div><strong>'+escapeHtml(nome)+'</strong><small>'+escapeHtml(estado)+'</small></div><a href="https://www.google.com/search?q='+encodeURIComponent('site:gov.br governador '+estado+' 2026')+'" target="_blank" rel="noopener noreferrer" aria-label="Consultar governo de '+escapeHtml(estado)+'">↗</a></article>').join('');
  $('govLinks').innerHTML='<a href="https://www.gov.br/planalto/pt-br" target="_blank" rel="noopener noreferrer">Presidência ↗</a><a href="https://www.conass.org.br/" target="_blank" rel="noopener noreferrer">Informações estaduais ↗</a><a href="https://nexoeconomico.com/politica/governadores-do-brasil-2026/" target="_blank" rel="noopener noreferrer">Fonte da lista (13/09/2026) ↗</a>';
 
  loadNationalPhotos();}
@@ -185,11 +185,12 @@ async function loadNationalPhotos(){
  document.querySelectorAll('[data-national-photo]').forEach(box=>{
   const key=box.dataset.nationalPhoto,url=photos[key];
   if(typeof url!=='string'||!url.startsWith('https://upload.wikimedia.org/')||box.querySelector('img'))return;
+  const fallback=box.querySelector('.national-uf')||box;
   const img=document.createElement('img');
   img.src=url;img.alt='Retrato de '+key;img.loading='lazy';img.referrerPolicy='no-referrer';
-  img.addEventListener('load',()=>box.classList.add('has-photo'));
-  img.addEventListener('error',()=>{img.remove();box.classList.remove('has-photo')});
-  box.append(img);
+  img.addEventListener('load',()=>{box.classList.add('has-photo');if(fallback!==box)fallback.hidden=true;});
+  img.addEventListener('error',()=>{img.remove();box.classList.remove('has-photo');if(fallback!==box)fallback.hidden=false;});
+  box.prepend(img);
  });
  if(data.aviso)console.warn('Município360 — fotos nacionais:',data.aviso);
 }
