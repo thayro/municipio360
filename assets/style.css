@@ -164,3 +164,10 @@ html,body{background:#0b1525;color:var(--paper)}body{background-image:radial-gra
 .media-score-reading span{font-size:10px;color:#d4e7f3}
 .media-score details{font-size:11px}
 .media-score details a{display:block;margin-top:8px;line-height:1.4;overflow-wrap:anywhere}
+
+/* Pesquisas públicas de perfis dos representantes */
+.rep-social{display:flex;flex-direction:column;gap:7px;margin-top:10px}
+.rep-social small{color:#a9c6d9;font-size:10px}
+.rep-social>div{display:flex;gap:6px;flex-wrap:wrap}
+.rep-social a{font-size:10px;text-decoration:none;padding:6px 8px;border:1px solid #456b8b;border-radius:7px;color:#c7e9fd;background:#1a2e49}
+.rep-social a:hover{border-color:#7dd3fc}
