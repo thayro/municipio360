@@ -18,6 +18,10 @@ function normalizaTitulo(string $s): string {
  return preg_replace('/[^a-z0-9]/','',strtolower($s)) ?: '';
 }
 
+if(isset($_GET['legado'])){
+ $old=cached('fotos-nacionais-2026-v3',86400*30,static fn()=>['ok'=>false,'error'=>'Cache antigo não encontrado']);
+ respond(['ok'=>true,'fotos'=>$old['fotos']??[],'quantidade'=>count($old['fotos']??[]),'origem'=>'cache anterior']);
+}
 $offset=max(0,min(count($nomes)-1,(int)($_GET['offset']??0)));
 $grupo=array_slice($nomes,$offset,4);
 function urlFoto(array $page): string {
@@ -55,7 +59,7 @@ function fotoPessoa(string $nome): array {
 }
 $fotos=[];$ausentes=[];$fontes=[];
 foreach($grupo as $nome){
- $result=cached('foto-pessoa-nacional-2026-v5-'.normalizaTitulo($nome),86400,static fn()=>['ok'=>true]+fotoPessoa($nome));
+ $result=cached('foto-pessoa-nacional-2026-v6-'.normalizaTitulo($nome),86400,static function() use ($nome): array { $found=fotoPessoa($nome);return ['ok'=>(bool)($found['foto']??false)]+$found; });
  $foto=(string)($result['foto']??'');
  if($foto!==''){$fotos[$nome]=$foto;$fontes[$nome]=$result['origem']??'Wikipédia';}
  else $ausentes[$nome]=$result['erro']??'Sem retrato verificado';
