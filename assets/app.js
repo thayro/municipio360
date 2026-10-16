@@ -26,7 +26,7 @@ function representativeSocialLinks(x){
 }
 function representativeCard(x){
  const photo=x.foto?'<img loading="lazy" referrerpolicy="no-referrer" onerror="this.hidden=true;this.nextElementSibling.hidden=false" src="'+escapeHtml(x.foto)+'" alt="Foto eleitoral de '+escapeHtml(x.nome)+'"><span class="person-avatar" hidden aria-hidden="true">♙</span>':'<span class="person-avatar" aria-hidden="true">♙</span>';
- return '<article class="official-person"><div class="rep-identity"><div class="rep-photo">'+photo+'</div><div class="rep-score" data-person="'+escapeHtml(x.nome)+'"><div class="rep-score-meter" role="status" aria-label="Índice de tom de notícias ainda não calculado"><strong>—</strong><span>/ 1000</span></div><small>Tom da mídia</small><button type="button" class="btn small rep-score-refresh">Calcular</button></div></div><div class="rep-details"><strong>'+escapeHtml(x.nome)+'</strong><small>'+escapeHtml(x.cargo)+' · '+escapeHtml(x.partido||'Partido não informado')+'</small><small>'+escapeHtml(x.fonte)+' · mandato atual não verificado</small>'+(x.url?'<a target="_blank" rel="noopener noreferrer" href="'+escapeHtml(x.url)+'">Consultar fonte ↗</a>':'')+representativeSocialLinks(x)+'<div class="rep-score-notice">Indicador experimental sobre manchetes indexadas, não mede caráter, aprovação ou desempenho. Sem pontuação quando não houver evidências suficientes.</div></div></article>';
+ return '<article class="official-person"><div class="rep-identity"><div class="rep-photo">'+photo+'</div><div class="rep-score" data-person="'+escapeHtml(x.nome)+'"><div class="rep-score-meter" role="status" aria-label="Índice de tom de notícias ainda não calculado"><strong>—</strong><span>/ 1000</span></div><small>Tom da mídia</small><small class="rep-score-state">Aguardando consulta automática</small></div></div><div class="rep-details"><strong>'+escapeHtml(x.nome)+'</strong><small>'+escapeHtml(x.cargo)+' · '+escapeHtml(x.partido||'Partido não informado')+'</small><small>'+escapeHtml(x.fonte)+' · mandato atual não verificado</small>'+(x.url?'<a target="_blank" rel="noopener noreferrer" href="'+escapeHtml(x.url)+'">Consultar fonte ↗</a>':'')+representativeSocialLinks(x)+'<div class="rep-score-notice">Indicador experimental sobre manchetes indexadas, não mede caráter, aprovação ou desempenho. Sem pontuação quando não houver evidências suficientes.</div></div></article>';
 }
 // Classificação conservadora de linguagem de títulos. Não decide a veracidade dos fatos.
 function scoreHeadline(text){
@@ -36,11 +36,12 @@ function scoreHeadline(text){
  const plus=positive.some(w=>s.includes(w)),minus=negative.some(w=>s.includes(w));
  return plus===minus?0:plus?1:-1;
 }
-async function inspectRepresentativeMedia(button){
- const panel=button.closest('.rep-score'),card=button.closest('.official-person'),city=state.city;
+async function inspectRepresentativeMedia(panel){
+ const card=panel?.closest('.official-person'),city=state.city;
  if(!panel||!card||!city)return;
  const id=String(city.id),name=panel.dataset.person;
- button.disabled=true;button.textContent='Consultando…';
+ const status=panel.querySelector('.rep-score-state');
+ if(status)status.textContent='Consultando…';
  try{
   const r=await api('social.php?id='+encodeURIComponent(id)+'&pessoa='+encodeURIComponent(name));
   if(String(state.city?.id)!==id||!panel.isConnected)return;
@@ -72,19 +73,29 @@ async function inspectRepresentativeMedia(button){
   }
   const notice=card.querySelector('.rep-score-notice');
   notice.innerHTML=info+(items.length?'<details><summary>Ver manchetes e fontes</summary>'+items.slice(0,15).map(x=>'<a href="'+escapeHtml(x.url)+'" target="_blank" rel="noopener noreferrer">'+escapeHtml(x.titulo||'Notícia')+' ↗</a>').join('')+'</details>':'<small>Não foram encontradas matérias; isso não representa avaliação negativa.</small>');
-  button.textContent='Atualizar';
+  if(status)status.textContent='Consulta automática concluída';
  }catch(e){
-  button.textContent='Tentar novamente';
+  if(status)status.textContent='Fonte indisponível';
   card.querySelector('.rep-score-notice').textContent='Não foi possível consultar as fontes: '+e.message;
- }finally{button.disabled=false;}
+ }
 }
-document.addEventListener('click',event=>{
- const b=event.target.closest('.rep-score-refresh');
- if(b)inspectRepresentativeMedia(b);
-});
+// Processa em lotes pequenos para não disparar requisições simultâneas para todos os vereadores.
+let mediaGeneration=0;
+async function loadAutomaticMediaScores(){
+ const generation=++mediaGeneration;
+ const cityId=String(state.city?.id||'');
+ const panels=[...document.querySelectorAll('#prefeitoCards .rep-score,#vereadoresCards .rep-score')];
+ for(const panel of panels){
+  if(generation!==mediaGeneration||String(state.city?.id||'')!==cityId)return;
+  if(!panel.isConnected)continue;
+  await inspectRepresentativeMedia(panel);
+ }
+}
+
 
 async function loadGovernance(){
  const city=state.city;if(!city)return;
+ mediaGeneration++;
  const mayorCards=$('prefeitoCards'),councilCards=$('vereadoresCards');
  $('prefeitoMeta').textContent='Consultando dados públicos...';
  $('vereadoresMeta').textContent='Verificando fontes disponíveis...';
@@ -101,6 +112,7 @@ async function loadGovernance(){
   $('prefeitoMeta').textContent=mayor?'Eleito em 2024 · '+(d.turno_prefeito||1)+'º turno · ocupante atual não confirmado':'Prefeito não identificado nesta consulta.';
   $('vereadoresMeta').textContent=councillors.length+' vereadores eleitos em 2024 · composição atual não confirmada';
   updateSocialPeople([...administration,...councillors]);
+  loadAutomaticMediaScores();
  }catch(e){
   if(state.city?.id!==city.id)return;
   $('prefeitoMeta').textContent='Consulta indisponível: '+e.message;
