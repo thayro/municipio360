@@ -136,7 +136,46 @@ async function loadBrazilFeeds(){
 async function loadStates(){setStatus('Consultando unidades federativas do IBGE...', 'loading');try{const d=await api('localidades.php?tipo=estados');const items=Array.isArray(d.data)?d.data:[];if(items.length===0)throw new Error('API IBGE retornou lista vazia');$('totalStates').textContent=items.length;setStatus(items.length+' unidades federativas carregadas. Selecione um estado no mapa ou na lista.');$('ufSelect').innerHTML='<option value="">Brasil — Todos os estados</option>'+items.map(x=>'<option value="'+escapeHtml(x.sigla)+'">'+escapeHtml(x.nome)+'</option>').join('')}catch(e){$('ufSelect').innerHTML='<option>IBGE indisponível</option>';setStatus('Não foi possível carregar estados: '+e.message,'error');console.error('Município360: ',e)}}
 
 function updateSocialPeople(people){const el=$('socialPerson');if(!el)return;const original=el.value;const unique=new Set();let options='<option value="">Município / prefeitura / câmara</option>';for(const p of people){if(!p.nome||unique.has(p.nome))continue;unique.add(p.nome);options+='<option value="'+escapeHtml(p.nome)+'">'+escapeHtml(p.cargo+': '+p.nome)+'</option>'}el.innerHTML=options;el.value=unique.has(original)?original:''}
-async function loadFinance(){const city=state.city;if(!city)return;const id=String(city.id),year=$('financeYear').value;placeholder('financeList','Consultando contas anuais no SICONFI...');$('financeCount').textContent='…';try{const r=await api('financas.php?id='+id+'&ano='+encodeURIComponent(year));if(String(state.city?.id)!==id||$('financeYear').value!==year)return;$('financeCount').textContent=r.disponivel?'DCA '+year:'Indisponível';const link=r.consulta_api||r.fonte_url;let html='<div class="note">'+escapeHtml(r.nota||r.mensagem||'')+'</div>';if(r.disponivel){html+='<div class="note">'+escapeHtml(String(r.quantidade_retornada))+' lançamentos retornados nesta consulta. Os lançamentos são brutos, não somados para evitar dupla contagem.</div>';const lines=(r.amostra||[]).filter(x=>x.descricao||x.conta).slice(0,20);html+=lines.map(x=>'<div class="contract-item"><strong>'+escapeHtml(x.descricao||x.conta)+'</strong><div class="metadata">'+escapeHtml(x.anexo||'DCA')+' · '+escapeHtml(x.conta||'')+'</div>'+(x.valor!==null?'<div class="contract-value">'+escapeHtml(currency(x.valor))+'</div>':'')+'</div>').join('')}else html+='<div class="placeholder">Nenhum dado contábil confirmado para este exercício pela fonte consultada.</div>';html+='<a class="textlink" target="_blank" rel="noopener noreferrer" href="'+escapeHtml(link)+'">Abrir fonte fiscal oficial ↗</a>';$('financeList').innerHTML=html}catch(e){$('financeCount').textContent='—';placeholder('financeList','Consulta fiscal falhou: '+e.message)}}
+function renderFinanceDashboard(result,year){
+ const list=$('financeList'),rows=(result.amostra||[]).filter(x=>x&&typeof x==='object');
+ const valid=rows.filter(x=>x.valor!==null&&Number.isFinite(Number(x.valor)));
+ const groups=new Map();
+ rows.forEach(x=>{const k=String(x.anexo||'Anexo não informado');groups.set(k,(groups.get(k)||0)+1)});
+ const order=[...groups].sort((a,b)=>b[1]-a[1]).slice(0,8);
+ const max=Math.max(1,...order.map(x=>x[1]));
+ const stats='<div class="finance-kpis"><div><small>Registros da consulta</small><strong>'+escapeHtml(result.quantidade_retornada??rows.length)+'</strong></div><div><small>Amostra exibida</small><strong>'+rows.length+'</strong></div><div><small>Com valor numérico</small><strong>'+valid.length+'</strong></div><div><small>Exercício</small><strong>'+escapeHtml(year)+'</strong></div></div>';
+ const graph=order.length?'<div class="finance-chart" role="img" aria-label="Quantidade de registros por anexo, não representa valores gastos">'+order.map(([name,count])=>'<div class="finance-bar-row"><span title="'+escapeHtml(name)+'">'+escapeHtml(name)+'</span><div class="finance-bar-track"><div class="finance-bar-fill" style="width:'+(count/max*100).toFixed(2)+'%"></div></div><b>'+count+'</b></div>').join('')+'</div>':'<div class="placeholder">Sem dados para o gráfico.</div>';
+ const title='<div class="finance-block-title"><h3>Registros por anexo</h3><small>Contagem de registros da amostra, não valores em reais</small></div>';
+ const table='<div class="finance-block-title"><h3>Lançamentos declarados</h3><small>Valores individuais sem agregação</small></div><label class="finance-searchlabel" for="financeSearch">Pesquisar registros<input id="financeSearch" type="search" placeholder="Anexo, conta ou descrição"></label><div class="finance-table-scroll"><table class="finance-table"><thead><tr><th>Anexo</th><th>Conta / descrição</th><th>Valor declarado</th></tr></thead><tbody id="financeTableBody"></tbody></table></div><div id="financeVisibleCount" class="metadata"></div>';
+ const note='<div class="note">'+escapeHtml(result.nota||'Dados fiscais declarados; não representam totais consolidados.')+' A API disponibiliza '+escapeHtml(result.quantidade_retornada??rows.length)+' registros nesta consulta; o gráfico considera apenas a amostra recebida.</div>';
+ const url=result.consulta_api||result.fonte_url;
+ list.innerHTML=stats+title+graph+table+note+(url?'<a class="textlink" target="_blank" rel="noopener noreferrer" href="'+escapeHtml(url)+'">Abrir dados na fonte oficial ↗</a>':'');
+ const body=$('financeTableBody'),input=$('financeSearch');
+ function draw(){
+  const q=input.value.toLocaleLowerCase('pt-BR');
+  const visible=rows.filter(x=>(String(x.anexo||'')+' '+String(x.conta||'')+' '+String(x.descricao||'')).toLocaleLowerCase('pt-BR').includes(q));
+  body.innerHTML=visible.length?visible.map(x=>'<tr><td>'+escapeHtml(x.anexo||'—')+'</td><td><strong>'+escapeHtml(x.conta||'—')+'</strong><br><span>'+escapeHtml(x.descricao||'—')+'</span></td><td class="finance-number">'+(x.valor!==null&&Number.isFinite(Number(x.valor))?escapeHtml(currency(Number(x.valor))):'—')+'</td></tr>').join(''):'<tr><td colspan="3">Nenhum registro encontrado.</td></tr>';
+  $('financeVisibleCount').textContent=visible.length+' de '+rows.length+' registros na amostra';
+ }
+ input.addEventListener('input',draw);draw();
+}
+async function loadFinance(){
+ const city=state.city;if(!city)return;
+ const id=String(city.id),year=$('financeYear').value;
+ placeholder('financeList','Consultando contas anuais no SICONFI...');
+ $('financeCount').textContent='…';
+ try{
+  const r=await api('financas.php?id='+id+'&ano='+encodeURIComponent(year));
+  if(String(state.city?.id)!==id||$('financeYear').value!==year)return;
+  $('financeCount').textContent=r.disponivel?'DCA '+year:'Indisponível';
+  if(r.disponivel)renderFinanceDashboard(r,year);
+  else placeholder('financeList',r.mensagem||'Nenhum dado contábil confirmado para este exercício.');
+ }catch(e){
+  if(String(state.city?.id)!==id)return;
+  $('financeCount').textContent='—';placeholder('financeList','Consulta fiscal falhou: '+e.message);
+ }
+}
+
 async function loadSocial(){const city=state.city;if(!city)return;const id=String(city.id),person=$('socialPerson').value;placeholder('socialList','Buscando notícias e menções indexadas...');$('socialLinks').innerHTML='';$('socialCount').textContent='…';try{const d=await api('social.php?id='+id+'&pessoa='+encodeURIComponent(person));if(String(state.city?.id)!==id||$('socialPerson').value!==person)return;const n=d.noticias_indexadas||[];$('socialCount').textContent=n.length+' notícias';$('socialLinks').innerHTML=(d.consultas_sociais||[]).map(x=>'<a target="_blank" rel="noopener noreferrer" href="'+escapeHtml(x.url)+'">'+escapeHtml(x.rede)+' ↗</a>').join('');$('socialList').innerHTML=n.length?n.map(x=>'<a class="news-item" href="'+escapeHtml(x.url)+'" target="_blank" rel="noopener noreferrer"><span class="source">'+escapeHtml(x.fonte)+' · fonte indexada</span><h3>'+escapeHtml(x.titulo)+'</h3><div class="metadata">'+escapeHtml(formatDate(x.data))+'</div></a>').join(''):'<div class="placeholder">Nenhuma menção jornalística encontrada nesta consulta. Utilize os links para pesquisar publicações sociais diretamente.</div>';$('socialNotice').textContent=d.aviso}catch(e){$('socialCount').textContent='—';placeholder('socialList','Busca de menções falhou: '+e.message)}}
 $('socialPerson').addEventListener('change',loadSocial);
 $('financeYear').addEventListener('change',loadFinance);
