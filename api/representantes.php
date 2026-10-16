@@ -58,11 +58,11 @@ $result=cached('municipio360-tse-direto-2024-'.$uf.'-'.$id,21600,static function
  $candidate=null;
  foreach($items as $r){
   if(!is_array($r))continue;
-  $n=oneOf($r,['nome','descricao','municipio','nomeMunicipio']);
+  $n=oneOf($r,['nome','descricao','municipio','nomeMunicipio','nmMunicipio']);
   if(is_string($n) && normMunicipio($n)===normMunicipio($name)){$candidate=$r;break;}
  }
  if(!$candidate)return ['ok'=>false,'error'=>'TSE: município não localizado na lista eleitoral (código IBGE e TSE são diferentes)'];
- $code=oneOf($candidate,['codigo','id','codigoTse','codigoMunicipio','cdMunicipio']);
+ $code=oneOf($candidate,['codigo','id','codigoTse','codigoMunicipio','cdMunicipio','codigoTSE','codMunicipio']);
  if(!is_scalar($code)||!preg_match('/^\d+$/',(string)$code))return ['ok'=>false,'error'=>'TSE: código eleitoral indisponível'];
  $candidates=[];$errors=[];
  foreach(['prefeito'=>11,'vice'=>12,'vereadores'=>13] as $role=>$cargo){
@@ -73,9 +73,9 @@ $result=cached('municipio360-tse-direto-2024-'.$uf.'-'.$id,21600,static function
   foreach($list as $person){if(!is_array($person))continue;$x=normalizePerson($person,$role);if($x)$candidates[$role][]=$x;}
  }
  if(count($errors)===3)return ['ok'=>false,'error'=>'TSE indisponível: '.implode('; ',$errors)];
- return ['ok'=>true,'prefeito'=>$candidates['prefeito'][0]??null,'vice'=>$candidates['vice'][0]??null,'vereadores'=>array_slice($candidates['vereadores']??[],0,35),'source'=>'TSE DivulgaCandContas (consulta HTTP direta)','warnings'=>$errors,'codigo_tse'=>(string)$code,'identificados'=>count($candidates['prefeito']??[])+count($candidates['vice']??[])+count($candidates['vereadores']??[])];
+ return ['ok'=>true,'prefeito'=>$candidates['prefeito'][0]??null,'vice'=>$candidates['vice'][0]??null,'vereadores'=>array_slice($candidates['vereadores']??[],0,35),'source'=>'TSE DivulgaCandContas (consulta HTTP direta)','warnings'=>$errors,'codigo_tse'=>(string)$code,'identificados'=>count($candidates['prefeito']??[])+count($candidates['vice']??[])+count($candidates['vereadores']??[]),'consultados'=>array_map(static fn($role)=>count($candidates[$role]??[]),['prefeito','vice','vereadores'])];
 });
 if(!($result['ok']??false)){
  respond(['ok'=>true,'prefeito'=>null,'vice'=>null,'vereadores'=>[],'fonte'=>'TSE (consulta indisponível)','observacao'=>($result['error']??'Não foi possível confirmar eleitos pela consulta direta.').' Consulte a fonte oficial; nenhum candidato foi presumido eleito.','fonte_url'=>'https://resultados.tse.jus.br/oficial/app/index.html','consulta_disponivel'=>false]);
 }
-respond(['ok'=>true,'prefeito'=>$result['prefeito']??null,'vice'=>$result['vice']??null,'vereadores'=>$result['vereadores']??[],'fonte'=>$result['source']??'TSE','observacao'=>'Eleitos de 2024, quando confirmados pelo status publicado pelo TSE. Não comprova quem ocupa o cargo em 2026. Fotos só aparecem com URL oficial comprovada; a ausência de nomes pode indicar mudança de formato ou indisponibilidade da API.','fonte_url'=>'https://resultados.tse.jus.br/oficial/app/index.html','consulta_disponivel'=>true,'avisos'=>$result['warnings']??[],'stale'=>$result['stale']??false]);
+respond(['ok'=>true,'prefeito'=>$result['prefeito']??null,'vice'=>$result['vice']??null,'vereadores'=>$result['vereadores']??[],'fonte'=>$result['source']??'TSE','observacao'=>'Eleitos de 2024, quando confirmados pelo status publicado pelo TSE. Não comprova quem ocupa o cargo em 2026. Fotos só aparecem com URL oficial comprovada; a ausência de nomes pode indicar mudança de formato ou indisponibilidade da API.','fonte_url'=>'https://resultados.tse.jus.br/oficial/app/index.html','consulta_disponivel'=>true,'identificados'=>$result['identificados']??0,'avisos'=>$result['warnings']??[],'stale'=>$result['stale']??false]);
