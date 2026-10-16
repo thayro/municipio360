@@ -425,3 +425,45 @@ html,body{background:#0b1525;color:var(--paper)}body{background-image:radial-gra
   .content>.map-panel .svg-wrap{height:clamp(350px,55vh,560px)}
   .content>.news-panel .news-list{max-height:520px}
 }
+
+/* Redesenho editorial do painel Notícias e repercussão */
+.content>.news-panel{background:linear-gradient(150deg,#1b2f48,#13243c 58%,#102036);border:1px solid #3c5571;border-radius:20px;padding:clamp(17px,2.6vw,30px);box-shadow:0 20px 44px #07132342}
+.content>.news-panel .news-heading{align-items:center;gap:20px;padding-bottom:21px;margin-bottom:20px;border-bottom:1px solid #354e69}
+.news-kicker{display:block;color:#76d2ef;font-size:10px;font-weight:800;letter-spacing:.17em;margin-bottom:12px}
+.content>.news-panel .news-heading h2{font-size:clamp(24px,3vw,38px);font-weight:800;line-height:1.15;letter-spacing:-.045em;color:#f1f7ff;margin:0 0 9px}
+.news-heading h2 em{font-style:normal;color:#74d0f0}
+.content>.news-panel .news-heading p{font-size:12px;color:#a8c2d8;line-height:1.6}
+.news-counter{min-width:132px;background:#1e3a54;border:1px solid #3e607d;border-radius:13px;padding:13px 16px;text-align:right}
+.news-counter small{display:block;color:#9cbad2;letter-spacing:.12em;font-size:9px;font-weight:800}
+.news-counter strong{display:block;color:#effaff;font-size:14px;margin-top:7px}
+.content>.news-panel .unified-origin-filters{gap:9px;border-bottom:1px solid #304961;padding-bottom:16px;margin-bottom:14px}
+.content>.news-panel .unified-origin-filters .pill{background:#1a334f;border:1px solid #385673;border-radius:10px;padding:11px 17px;font-size:12px;color:#b5ccdf;font-weight:700;transition:background .18s,border-color .18s}
+.content>.news-panel .unified-origin-filters .pill.chosen{background:#26658c;border-color:#81cbea;color:#fff}
+.content>.news-panel .unified-origin-filters .pill:hover{border-color:#81cbea;background:#275071}
+.content>.news-panel .news-topic-filters{gap:8px;margin-bottom:7px}
+.content>.news-panel .news-topic-filters .pill{padding:8px 13px;font-size:11px}
+.content>.news-panel .unified-person{gap:12px;margin:4px 0 11px}
+.content>.news-panel .unified-person select{background:#1b344d;border:1px solid #46647f;border-radius:9px;padding:9px;color:#f2f7ff;min-height:38px}
+.content>.news-panel .unified-social-links{margin:0 0 13px}
+.content>.news-panel .news-list{gap:11px;scrollbar-width:thin;scrollbar-color:#466883 transparent}
+.content>.news-panel .news-editorial-item{display:grid;grid-template-columns:114px minmax(0,1fr) 34px;gap:17px;align-items:center;padding:21px;background:#1b304a;border:1px solid #36506a;border-radius:14px;min-height:115px;transition:background .18s,border-color .18s,transform .18s}
+.content>.news-panel .news-editorial-item:hover{background:#243d58;border-color:#78c6e9;transform:translateY(-1px)}
+.news-type{justify-self:start;padding:7px 10px;border:1px solid #397498;border-radius:7px;background:#204866;color:#aee8ff;font-size:9px;font-weight:800;letter-spacing:.05em}
+.news-item-copy{min-width:0}
+.news-editorial-item .source{color:#8fd6f4;font-size:10px}
+.content>.news-panel .news-editorial-item h3{font-size:clamp(13px,1.3vw,16px);line-height:1.5;letter-spacing:-.01em;margin:7px 0;color:#f3f8ff}
+.news-editorial-item .metadata{font-size:11px;color:#a1b7cf}
+.news-go{width:33px;height:33px;display:grid;place-items:center;background:#294664;border:1px solid #4a6d88;border-radius:9px;color:#bceaff;font-size:16px}
+.content>.news-panel .note{margin-top:17px;color:#9cb3ca}
+@media(max-width:700px){
+ .content>.news-panel{padding:15px;border-radius:15px}
+ .content>.news-panel .news-heading{gap:9px;align-items:flex-start}
+ .content>.news-panel .news-heading h2{font-size:23px}
+ .news-counter{min-width:85px;padding:9px}
+ .news-counter small{font-size:8px}
+ .news-counter strong{font-size:11px}
+ .content>.news-panel .unified-origin-filters .pill{padding:9px 12px;font-size:11px}
+ .content>.news-panel .news-editorial-item{grid-template-columns:minmax(0,1fr) 31px;gap:9px;padding:15px}
+ .news-type{grid-column:1/-1}
+ .content>.news-panel .news-editorial-item h3{font-size:14px}
+}
