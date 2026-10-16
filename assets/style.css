@@ -366,3 +366,6 @@ html,body{background:#0b1525;color:var(--paper)}body{background-image:radial-gra
  .representative-profile-dialog .rep-dialog-summary>.rep-photo .person-avatar{width:60px;height:75px;flex-basis:60px}
  .representative-profile-dialog .rep-dialog-summary>.rep-score{width:70px}
 }
+
+/* Escala cromática do tom das manchetes: 0–349 vermelho, 350–499 laranja, 500–649 azul, 650–1000 verde. Sem dados: cinza. */
+.rep-score-meter{--score-color:#8091a7;background:conic-gradient(var(--score-color) var(--score-progress),#30465e 0);transition:background .2s ease}
