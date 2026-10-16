@@ -512,3 +512,24 @@ html,body{background:#0b1525;color:var(--paper)}body{background-image:radial-gra
 .national-governor-photo .national-uf{display:grid;width:100%;height:100%;border:0;border-radius:0;place-items:center}
 .national-governor-photo .national-uf[hidden]{display:none!important}
 .national-governor{grid-template-columns:52px minmax(0,1fr) 26px}
+
+
+/* Município360 — mapa em estilo portal institucional (2026).
+   Escopo restrito ao painel cartográfico; preserva demais componentes. */
+.map-panel{background:#14243a;border-color:#415771;box-shadow:0 2px 12px rgba(3,13,30,.14)}
+.map-panel .heading{padding-bottom:12px;border-bottom:1px solid #38506b}
+.map-panel .heading h2{font-size:15px;font-weight:750;letter-spacing:0}
+.map-panel .heading p{font-size:11px;line-height:1.6}
+.map-panel .tiny{color:#d5e5f3;background:#263d58;border:1px solid #49617c;padding:6px 9px;border-radius:5px}
+.map-panel .svg-wrap{background:linear-gradient(180deg,#192e49 0%,#14253b 100%);border:1px solid #334e6b;border-radius:10px;padding:10px}
+.map-panel .svg-wrap .uf path{stroke:#e0e9f3;stroke-width:1;stroke-linejoin:round;transition:fill .16s ease,stroke .16s ease,filter .16s ease}
+.map-panel .svg-wrap .uf:hover path,.map-panel .svg-wrap .uf:focus-visible path{fill:#a9d0e4!important;stroke:#fff!important;stroke-width:1.8;filter:brightness(1.07)}
+.map-panel .svg-wrap .uf.selected path{fill:#d1e8fa!important;stroke:#ffffff!important;stroke-width:2;filter:none}
+.map-panel .svg-wrap .uf:focus-visible{outline:2px solid #d9ebfc;outline-offset:2px}
+.map-panel .map-legend{padding:11px 0;line-height:1.5;color:#e1ecf5;flex-wrap:wrap}
+.map-panel .map-legend .legend-desc{font-size:10px;line-height:1.5;color:#aebfd1}
+.map-panel .map-tools{padding:6px 0 10px;border-bottom:1px solid #38506b;gap:10px}
+.map-panel .map-tools #mapMode{font-size:11px;color:#d6e6f5}
+.map-panel .subpanel{border-top:0;margin-top:10px}
+@media(max-width:700px){.map-panel .svg-wrap{padding:4px}.map-panel .map-legend{align-items:flex-start}.map-panel .map-legend .legend-desc{width:100%;margin:3px 0 0}}
+@media(prefers-reduced-motion:reduce){.map-panel .svg-wrap .uf path{transition:none}}
