@@ -10,11 +10,11 @@ async function api(path){
 }
 function placeholder(id,msg){$(id).innerHTML='<div class="placeholder">'+escapeHtml(msg)+'</div>'}
 function ufCode(city){return city?.microrregiao?.mesorregiao?.UF?.sigla||city?.['regiao-imediata']?.['regiao-intermediaria']?.UF?.sigla||state.uf}
-function selectUF(uf){if(!uf){resetBrazil();return;}hideMunicipalTooltip();setStatus('Carregando municípios de '+uf+'...', 'loading');state.uf=uf;state.city=null;state.cities=[];$('ufSelect').value=uf;$('citySelect').disabled=true;$('citySearch').disabled=true;$('citySelect').innerHTML='<option>Carregando municípios...</option>';$('placeTag').textContent=uf+' · selecione o município';$('locationHeading').textContent='Estado: '+uf;$('locationDetails').textContent='Escolha um município para visualizar seus dados.';
+function selectUF(uf){if(!uf){resetBrazil();return;}hideMunicipalTooltip();setStatus('Carregando municípios de '+uf+'...', 'loading');state.uf=uf;state.city=null;state.cities=[];resetUnifiedMedia('uf:'+uf);$('ufSelect').value=uf;$('citySelect').disabled=true;$('citySearch').disabled=true;$('citySelect').innerHTML='<option>Carregando municípios...</option>';$('placeTag').textContent=uf+' · selecione o município';$('locationHeading').textContent='Estado: '+uf;$('locationDetails').textContent='Escolha um município para visualizar seus dados.';
 document.querySelectorAll('#mapa .uf').forEach(el=>el.classList.toggle('selected',el.dataset.uf===uf));placeholder('newsList','Selecione um município para notícias locais.');placeholder('contractsList','Selecione um município para licitações locais.');return loadCities(uf).then(()=>{if(state.uf===uf)loadMunicipalMap(uf)});}
 async function loadCities(uf){try{const d=await api('localidades.php?tipo=municipios&uf='+uf);if(state.uf!==uf)return;state.cities=Array.isArray(d.data)?d.data:[];setStatus(state.cities.length+' municípios carregados para '+uf+'. Selecione uma cidade.');$('citySearch').disabled=false;$('citySelect').disabled=false;renderCityOptions();$('totalCities').textContent=String(state.cities.length)+' em '+uf;}catch(e){$('citySelect').innerHTML='<option>Falha ao carregar municípios</option>';$('locationDetails').textContent=e.message;setStatus('Falha na consulta dos municípios: '+e.message,'error')}}
 function renderCityOptions(){const term=$('citySearch').value.toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g,'');const options=state.cities.filter(c=>c.nome.toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g,'').includes(term));const current=state.city?.id||'';$('citySelect').innerHTML='<option value="">Selecione o município ('+options.length+')</option>'+options.map(c=>'<option value="'+c.id+'" '+(String(c.id)===String(current)?'selected':'')+'>'+escapeHtml(c.nome)+'</option>').join('')}
-async function selectCity(id){const city=state.cities.find(c=>String(c.id)===String(id));if(!city)return;state.city=city;setStatus('Município '+city.nome+' selecionado. Consultando notícias e contratações...');$('placeTag').textContent=city.nome+' / '+ufCode(city);$('locationHeading').textContent=city.nome+' — '+ufCode(city);$('locationDetails').textContent='Código IBGE: '+city.id+' · Fontes: IBGE, notícias indexadas e PNCP.';$('ibgeLink').href='https://cidades.ibge.gov.br/brasil/'+city.id+'/panorama';$('prefeitoMeta').textContent='Prefeito atual: ainda não verificado automaticamente. Confira no portal da Prefeitura e no TSE.';$('vereadoresMeta').textContent='Composição atual da Câmara: consulte a fonte institucional; não inferimos vereadores apenas pelos resultados eleitorais.';const q=encodeURIComponent('prefeitura '+city.nome+' '+state.uf);$('govLinks').innerHTML='<a target="_blank" rel="noopener noreferrer" href="https://www.google.com/search?q='+q+'">Localizar prefeitura ↗</a><a target="_blank" rel="noopener noreferrer" href="https://www.google.com/search?q='+encodeURIComponent('câmara municipal '+city.nome+' '+state.uf)+'">Localizar Câmara ↗</a>';highlightMunicipality(String(city.id));loadCityMediaScore();loadCitySocialSignals();loadGovernance();loadFinance();loadSocial();$('totalNews').textContent='…';$('totalBids').textContent='…';loadNews();loadContracts();}
+async function selectCity(id){const city=state.cities.find(c=>String(c.id)===String(id));if(!city)return;state.city=city;setStatus('Município '+city.nome+' selecionado. Consultando notícias e contratações...');$('placeTag').textContent=city.nome+' / '+ufCode(city);$('locationHeading').textContent=city.nome+' — '+ufCode(city);$('locationDetails').textContent='Código IBGE: '+city.id+' · Fontes: IBGE, notícias indexadas e PNCP.';$('ibgeLink').href='https://cidades.ibge.gov.br/brasil/'+city.id+'/panorama';$('prefeitoMeta').textContent='Prefeito atual: ainda não verificado automaticamente. Confira no portal da Prefeitura e no TSE.';$('vereadoresMeta').textContent='Composição atual da Câmara: consulte a fonte institucional; não inferimos vereadores apenas pelos resultados eleitorais.';const q=encodeURIComponent('prefeitura '+city.nome+' '+state.uf);$('govLinks').innerHTML='<a target="_blank" rel="noopener noreferrer" href="https://www.google.com/search?q='+q+'">Localizar prefeitura ↗</a><a target="_blank" rel="noopener noreferrer" href="https://www.google.com/search?q='+encodeURIComponent('câmara municipal '+city.nome+' '+state.uf)+'">Localizar Câmara ↗</a>';highlightMunicipality(String(city.id));resetUnifiedMedia('city:'+city.id);loadCityMediaScore();loadCitySocialSignals();loadGovernance();loadFinance();loadSocial();$('totalNews').textContent='…';$('totalBids').textContent='…';loadNews();loadContracts();}
 
 function representativeSocialLinks(x){
  const q=[x.nome,state.city?.nome||'',state.uf||''].filter(Boolean).join(' ');
@@ -267,14 +267,53 @@ async function loadGovernance(){
  }
 }
 
-async function loadNews(){if(!state.city)return;const id=state.city.id,topic=state.topic;placeholder('newsList','Consultando fontes de notícias...');
+
+const unifiedMedia={news:[],mentions:[],failures:[],origin:'todas',scope:''};
+function mediaKey(x){return String(x.titulo||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').replace(/[^a-z0-9]/g,'').slice(0,110)}
+function mediaDate(x){
+ const v=String(x.data||'').trim();
+ if(/^\d{14}$/.test(v))return Date.parse(v.slice(0,4)+'-'+v.slice(4,6)+'-'+v.slice(6,8)+'T'+v.slice(8,10)+':'+v.slice(10,12)+':'+v.slice(12,14)+'Z')||0;
+ const t=Date.parse(v);return Number.isFinite(t)?t:0;
+}
+function renderUnifiedMedia(){
+ const origin=unifiedMedia.origin;
+ const seen=new Set();
+ let entries=[...unifiedMedia.news.map(x=>({...x,_kind:'noticias'})),...unifiedMedia.mentions.map(x=>({...x,_kind:'mencoes'}))]
+ .filter(x=>{const title=String(x.titulo||'').trim();try{const u=new URL(x.url);return title&&['https:','http:'].includes(u.protocol)}catch{return false}})
+ .sort((a,b)=>mediaDate(b)-mediaDate(a));
+ entries=entries.filter(x=>{const key=mediaKey(x);if(!key||seen.has(key))return false;seen.add(key);return true;});
+ const total=entries.length;
+ if(origin==='redes')entries=[];
+ else if(origin!=='todas')entries=entries.filter(x=>x._kind===origin);
+ $('newsCount').textContent=(origin==='todas'?total:entries.length)+' resultados';
+ $('totalNews').textContent=total;
+ $('newsList').innerHTML=origin==='redes'
+ ?'<div class="placeholder">As redes sociais disponíveis estão nos links de busca acima. Não há coleta direta de posts autenticados neste momento.</div>'
+ :entries.length?entries.slice(0,100).map(n=>'<a class="news-item" href="'+escapeHtml(n.url)+'" target="_blank" rel="noopener noreferrer"><span class="source">'+(n._kind==='mencoes'?'Menção na imprensa':'Notícia')+' · '+escapeHtml(n.fonte||n.origem||'Fonte externa')+'</span><h3>'+escapeHtml(n.titulo)+'</h3><div class="metadata">'+escapeHtml(formatDate(n.data))+' · Abrir fonte ↗</div></a>').join('')
+ :'<div class="placeholder">Nenhuma publicação encontrada para este filtro nesta consulta.</div>';
+ if(unifiedMedia.failures.length){
+  const note=document.createElement('div');note.className='note';note.textContent='Fontes indisponíveis: '+unifiedMedia.failures.join(' | ');$('newsList').append(note);
+ }
+}
+function resetUnifiedMedia(scope){
+ unifiedMedia.scope=scope;unifiedMedia.news=[];unifiedMedia.mentions=[];unifiedMedia.failures=[];
+ $('socialLinks').replaceChildren();renderUnifiedMedia();
+}
+document.querySelectorAll('#originFilters .pill').forEach(button=>button.addEventListener('click',()=>{
+ unifiedMedia.origin=button.dataset.origin;
+ document.querySelectorAll('#originFilters .pill').forEach(b=>b.classList.toggle('chosen',b===button));
+ renderUnifiedMedia();
+}));
+
+async function loadNews(){
+ if(!state.city)return;
+ const id=String(state.city.id),topic=state.topic,scope='city:'+id;
+ unifiedMedia.scope=scope;unifiedMedia.news=[];renderUnifiedMedia();
  const responses=await Promise.allSettled([api('noticias.php?id='+id+'&tema='+encodeURIComponent(topic)),api('rss.php?id='+id+'&tema='+encodeURIComponent(topic))]);
- if(state.city?.id!==id||state.topic!==topic)return;let items=[],failed=[];
- responses.forEach((res,i)=>{if(res.status==='fulfilled')items.push(...(res.value.noticias||[]).map(n=>({...n,origem:i===0?'GDELT':'RSS'})));else failed.push((i===0?'GDELT':'RSS')+': '+res.reason.message)});
- let seen=new Set();items=items.filter(n=>{const key=String(n.titulo||'').toLocaleLowerCase('pt-BR').replace(/[^a-z0-9à-ÿ]/g,'').slice(0,100);if(!key||seen.has(key))return false;seen.add(key);return true}).slice(0,60);
- $('totalNews').textContent=items.length;$('newsCount').textContent=items.length+' resultados';
- $('newsList').innerHTML=items.length?items.map(n=>'<a class="news-item" href="'+escapeHtml(n.url)+'" target="_blank" rel="noopener noreferrer"><span class="source">'+escapeHtml(n.fonte||'Fonte externa')+' · '+escapeHtml(n.origem)+'</span><h3>'+escapeHtml(n.titulo)+'</h3><div class="metadata">'+escapeHtml(formatDate(n.data))+' · Abrir reportagem ↗</div></a>').join(''):'<div class="placeholder">Nenhuma notícia localizada nesta consulta. Isso não significa ausência de acontecimentos.</div>';
- if(failed.length){const d=document.createElement('div');d.className='note';d.textContent='Fontes indisponíveis nesta consulta: '+failed.join(' | ');$('newsList').append(d)}
+ if(String(state.city?.id)!==id||state.topic!==topic||unifiedMedia.scope!==scope)return;
+ const items=[];unifiedMedia.failures=[];
+ responses.forEach((r,i)=>{if(r.status==='fulfilled')items.push(...(r.value.noticias||[]).map(n=>({...n,origem:i===0?'GDELT':'RSS'})));else unifiedMedia.failures.push((i===0?'GDELT':'RSS')+': '+r.reason.message)});
+ unifiedMedia.news=items;renderUnifiedMedia();
 }
 function formatDate(v){if(!v)return 'Data não fornecida';if(/^\d{14}$/.test(v))return v.slice(6,8)+'/'+v.slice(4,6)+'/'+v.slice(0,4)+' '+v.slice(8,10)+':'+v.slice(10,12);return v}
 const currency=v=>typeof v==='number'?v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'}):'Valor não divulgado';
@@ -283,7 +322,7 @@ const brasilMarkup=$('svgWrap').innerHTML;
 let mapRequest=0;
 function restoreBrazil(){hideMunicipalTooltip();mapRequest++;$('svgWrap').innerHTML=brasilMarkup;$('mapMode').textContent='Brasil: selecione uma UF';$('mapBack').hidden=true;wireMap();}
 function resetBrazil(){
- state.uf='';state.city=null;state.cities=[];
+ state.uf='';state.city=null;state.cities=[];resetUnifiedMedia('brasil');
  $('ufSelect').value='';$('citySelect').disabled=true;$('citySelect').innerHTML='<option value="">Selecione um estado primeiro</option>';
  $('citySearch').value='';$('citySearch').disabled=true;
  $('placeTag').textContent='Brasil · todos os estados';
@@ -340,14 +379,13 @@ $('ufSelect').addEventListener('change',e=>{geoEpoch++;selectUF(e.target.value)}
 document.querySelectorAll('#filters .pill').forEach(b=>b.addEventListener('click',()=>{state.topic=b.dataset.topic;document.querySelectorAll('#filters .pill').forEach(x=>x.classList.toggle('chosen',x===b));if(state.city)loadNews();else loadBrazilFeeds()}));document.querySelectorAll('.nav').forEach(n=>n.addEventListener('click',()=>showSection(n.dataset.section)));
 async function loadBrazilFeeds(){
  if(state.city)return;
- placeholder('newsList','Consultando notícias municipais de todo o Brasil...');placeholder('contractsList','Consultando licitações municipais nacionais...');
+ resetUnifiedMedia('brasil');placeholder('newsList','Consultando notícias municipais de todo o Brasil...');placeholder('contractsList','Consultando licitações municipais nacionais...');
  const results=await Promise.allSettled([api('brasil_noticias.php'),api('brasil_contratacoes.php')]);
  if(state.city)return;
  if(results[0].status==='fulfilled'){
-  const v=results[0].value,items=v.noticias||[];
-  $('newsList').innerHTML=items.length?items.map(n=>'<a class="news-item" href="'+escapeHtml(n.url)+'" target="_blank" rel="noopener noreferrer"><span class="source">'+escapeHtml(n.fonte||'Noticiário')+' · Brasil</span><h3>'+escapeHtml(n.titulo)+'</h3><div class="metadata">'+escapeHtml(formatDate(n.data))+' · Ler notícia ↗</div></a>').join(''):'<div class="placeholder">A fonte não retornou notícias nesta consulta nacional.</div>';
-  $('totalNews').textContent=items.length;$('newsCount').textContent=items.length+' Brasil';
- }else{placeholder('newsList','Notícias nacionais temporariamente indisponíveis: '+results[0].reason.message);$('totalNews').textContent='—'}
+  unifiedMedia.news=(results[0].value.noticias||[]).map(n=>({...n,origem:'Brasil'}));
+ }else unifiedMedia.failures=['Notícias nacionais: '+results[0].reason.message];
+ renderUnifiedMedia();
  if(results[1].status==='fulfilled'){
   const v=results[1].value,items=v.itens||[];
   $('contractsList').innerHTML=items.length?items.map(c=>'<a class="contract-item" target="_blank" rel="noopener noreferrer" href="'+escapeHtml(c.link)+'"><span class="source">'+escapeHtml(c.modalidade)+' · '+escapeHtml(c.municipio||c.uf||'Brasil')+'</span><h3>'+escapeHtml(c.objeto||'Contratação')+'</h3><div class="metadata">'+escapeHtml(c.orgao||'Órgão municipal')+' · '+escapeHtml(c.publicacao||'Sem data')+'</div><div class="contract-value">'+escapeHtml(currency(c.valor))+' ↗</div></a>').join(''):'<div class="placeholder">Nenhum órgão municipal encontrado nesta amostra nacional do PNCP.</div>';
@@ -397,7 +435,22 @@ async function loadFinance(){
  }
 }
 
-async function loadSocial(){const city=state.city;if(!city)return;const id=String(city.id),person=$('socialPerson').value;placeholder('socialList','Buscando notícias e menções indexadas...');$('socialLinks').innerHTML='';$('socialCount').textContent='…';try{const d=await api('social.php?id='+id+'&pessoa='+encodeURIComponent(person));if(String(state.city?.id)!==id||$('socialPerson').value!==person)return;const n=d.noticias_indexadas||[];$('socialCount').textContent=n.length+' notícias';$('socialLinks').innerHTML=(d.consultas_sociais||[]).map(x=>'<a target="_blank" rel="noopener noreferrer" href="'+escapeHtml(x.url)+'">'+escapeHtml(x.rede)+' ↗</a>').join('');$('socialList').innerHTML=n.length?n.map(x=>'<a class="news-item" href="'+escapeHtml(x.url)+'" target="_blank" rel="noopener noreferrer"><span class="source">'+escapeHtml(x.fonte)+' · fonte indexada</span><h3>'+escapeHtml(x.titulo)+'</h3><div class="metadata">'+escapeHtml(formatDate(x.data))+'</div></a>').join(''):'<div class="placeholder">Nenhuma menção jornalística encontrada nesta consulta. Utilize os links para pesquisar publicações sociais diretamente.</div>';$('socialNotice').textContent=d.aviso}catch(e){$('socialCount').textContent='—';placeholder('socialList','Busca de menções falhou: '+e.message)}}
+async function loadSocial(){
+ const city=state.city;if(!city)return;
+ const id=String(city.id),person=$('socialPerson').value,scope='city:'+id;
+ unifiedMedia.scope=scope;unifiedMedia.mentions=[];$('socialLinks').replaceChildren();renderUnifiedMedia();
+ try{
+  const d=await api('social.php?id='+id+'&pessoa='+encodeURIComponent(person));
+  if(String(state.city?.id)!==id||$('socialPerson').value!==person||unifiedMedia.scope!==scope)return;
+  unifiedMedia.mentions=d.noticias_indexadas||[];
+  $('socialLinks').innerHTML=(d.consultas_sociais||[]).filter(x=>{try{return new URL(x.url).protocol==='https:'}catch{return false}}).map(x=>'<a target="_blank" rel="noopener noreferrer" href="'+escapeHtml(x.url)+'">'+escapeHtml(x.rede)+' ↗</a>').join('');
+  $('socialNotice').textContent=String(d.aviso||'Redes sociais: links externos de pesquisa; não representam postagens coletadas.');
+  renderUnifiedMedia();
+ }catch(e){
+  if(unifiedMedia.scope!==scope)return;
+  unifiedMedia.failures.push('Menções: '+e.message);renderUnifiedMedia();
+ }
+}
 $('socialPerson').addEventListener('change',loadSocial);
 $('financeYear').addEventListener('change',loadFinance);
 
