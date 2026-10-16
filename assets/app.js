@@ -16,17 +16,34 @@ async function loadCities(uf){try{const d=await api('localidades.php?tipo=munici
 function renderCityOptions(){const term=$('citySearch').value.toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g,'');const options=state.cities.filter(c=>c.nome.toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g,'').includes(term));const current=state.city?.id||'';$('citySelect').innerHTML='<option value="">Selecione o município ('+options.length+')</option>'+options.map(c=>'<option value="'+c.id+'" '+(String(c.id)===String(current)?'selected':'')+'>'+escapeHtml(c.nome)+'</option>').join('')}
 async function selectCity(id){const city=state.cities.find(c=>String(c.id)===String(id));if(!city)return;state.city=city;setStatus('Município '+city.nome+' selecionado. Consultando notícias e contratações...');$('placeTag').textContent=city.nome+' / '+ufCode(city);$('locationHeading').textContent=city.nome+' — '+ufCode(city);$('locationDetails').textContent='Código IBGE: '+city.id+' · Fontes: IBGE, notícias indexadas e PNCP.';$('ibgeLink').href='https://cidades.ibge.gov.br/brasil/'+city.id+'/panorama';$('prefeitoMeta').textContent='Prefeito atual: ainda não verificado automaticamente. Confira no portal da Prefeitura e no TSE.';$('vereadoresMeta').textContent='Composição atual da Câmara: consulte a fonte institucional; não inferimos vereadores apenas pelos resultados eleitorais.';const q=encodeURIComponent('prefeitura '+city.nome+' '+state.uf);$('govLinks').innerHTML='<a target="_blank" rel="noopener noreferrer" href="https://www.google.com/search?q='+q+'">Localizar prefeitura ↗</a><a target="_blank" rel="noopener noreferrer" href="https://www.google.com/search?q='+encodeURIComponent('câmara municipal '+city.nome+' '+state.uf)+'">Localizar Câmara ↗</a>';highlightMunicipality(String(city.id));loadGovernance();loadFinance();loadSocial();$('totalNews').textContent='…';$('totalBids').textContent='…';loadNews();loadContracts();}
 
+function representativeCard(x){
+ return '<article class="official-person">'+(x.foto?'<img loading="lazy" referrerpolicy="no-referrer" onerror="this.hidden=true;this.nextElementSibling.hidden=false" src="'+escapeHtml(x.foto)+'" alt="Foto eleitoral de '+escapeHtml(x.nome)+'"><span class="person-avatar" hidden aria-hidden="true">♙</span>':'<span class="person-avatar" aria-hidden="true">♙</span>')+'<div><strong>'+escapeHtml(x.nome)+'</strong><small>'+escapeHtml(x.cargo)+' · '+escapeHtml(x.partido||'Partido não informado')+'</small><small>'+escapeHtml(x.fonte)+' · referência não confirmada para mandato atual</small>'+(x.url?'<a target="_blank" rel="noopener noreferrer" href="'+escapeHtml(x.url)+'">Consultar fonte ↗</a>':'')+'</div></article>';
+}
 async function loadGovernance(){
  const city=state.city;if(!city)return;
- $('prefeitoMeta').textContent='Consultando dados públicos...';$('vereadoresMeta').textContent='Verificando fontes disponíveis...';
- const cards=$('officialCards');if(cards)cards.innerHTML='<div class="placeholder">Consultando referências públicas...</div>';
- try{const d=await api('representantes.php?id='+encodeURIComponent(city.id)+'&nome='+encodeURIComponent(city.nome)+'&uf='+encodeURIComponent(state.uf));if(state.city?.id!==city.id)return;
+ const mayorCards=$('prefeitoCards'),councilCards=$('vereadoresCards');
+ $('prefeitoMeta').textContent='Consultando dados públicos...';
+ $('vereadoresMeta').textContent='Verificando fontes disponíveis...';
+ mayorCards.innerHTML='<div class="placeholder">Consultando prefeito...</div>';
+ councilCards.innerHTML='<div class="placeholder">Consultando vereadores...</div>';
+ try{
+  const d=await api('representantes.php?id='+encodeURIComponent(city.id)+'&nome='+encodeURIComponent(city.nome)+'&uf='+encodeURIComponent(state.uf));
+  if(state.city?.id!==city.id)return;
   const mayor=d.prefeito;
-  $('prefeitoMeta').textContent=mayor?mayor.nome+' · '+(mayor.partido||'Partido não informado')+' · Fonte '+mayor.fonte+' (não confirmado como ocupante atual)':'Prefeito: não confirmado na resposta oficial desta consulta.';
-  const people=[...(mayor?[{...mayor,cargo:'Prefeito eleito em 2024'}]:[]),...(d.vice?[{...d.vice,cargo:'Vice-prefeito eleito em 2024'}]:[]),...(d.vereadores||[]).map(x=>({...x,cargo:'Vereador eleito em 2024'}))];
-  if(cards)cards.innerHTML=people.length?people.map(x=>'<article class="official-person">'+(x.foto?'<img loading="lazy" referrerpolicy="no-referrer" onerror="this.hidden=true;this.nextElementSibling.hidden=false" src="'+escapeHtml(x.foto)+'" alt="Foto eleitoral de '+escapeHtml(x.nome)+'"><span class="person-avatar" hidden aria-hidden="true">♙</span>':'<span class="person-avatar" aria-hidden="true">♙</span>')+'<div><strong>'+escapeHtml(x.nome)+'</strong><small>'+escapeHtml(x.cargo)+' · '+escapeHtml(x.partido||'Partido não informado')+'</small><small>'+escapeHtml(x.fonte)+' · referência não confirmada para mandato atual</small>'+(x.url?'<a target="_blank" rel="noopener noreferrer" href="'+escapeHtml(x.url)+'">Consultar fonte ↗</a>':'')+'</div></article>').join(''):'<div class="placeholder">'+escapeHtml(d.observacao||'Não foram encontrados nomes verificáveis nas fontes estruturadas consultadas. Consulte os portais oficiais para confirmar ocupantes.')+'</div>';
-  updateSocialPeople(people);$('vereadoresMeta').textContent=(d.vereadores||[]).length?(d.vereadores.length+' nomes de referência disponíveis; confirmação de mandato necessária'):'Vereadores: sem nomes confirmados na resposta da consulta.';
- }catch(e){$('prefeitoMeta').textContent='Consulta de representantes indisponível: '+e.message;$('vereadoresMeta').textContent='Consulte os canais oficiais da Câmara.';if(cards)cards.innerHTML='<div class="placeholder">Não foi possível consultar dados de representantes.</div>'}
+  const administration=[...(mayor?[{...mayor,cargo:'Prefeito eleito em 2024'}]:[]),...(d.vice?[{...d.vice,cargo:'Vice-prefeito eleito em 2024'}]:[])];
+  const councillors=(d.vereadores||[]).map(x=>({...x,cargo:'Vereador eleito em 2024'}));
+  mayorCards.innerHTML=administration.length?administration.map(representativeCard).join(''):'<div class="placeholder">'+escapeHtml(d.observacao||'Prefeito não confirmado nesta consulta.')+'</div>';
+  councilCards.innerHTML=councillors.length?councillors.map(representativeCard).join(''):'<div class="placeholder">'+escapeHtml(d.observacao||'Vereadores não confirmados nesta consulta.')+'</div>';
+  $('prefeitoMeta').textContent=mayor?'Eleito em 2024 · '+(d.turno_prefeito||1)+'º turno · ocupante atual não confirmado':'Prefeito não identificado nesta consulta.';
+  $('vereadoresMeta').textContent=councillors.length+' vereadores eleitos em 2024 · composição atual não confirmada';
+  updateSocialPeople([...administration,...councillors]);
+ }catch(e){
+  if(state.city?.id!==city.id)return;
+  $('prefeitoMeta').textContent='Consulta indisponível: '+e.message;
+  $('vereadoresMeta').textContent='Consulta indisponível: '+e.message;
+  mayorCards.innerHTML='<div class="placeholder">Não foi possível consultar o prefeito.</div>';
+  councilCards.innerHTML='<div class="placeholder">Não foi possível consultar os vereadores.</div>';
+ }
 }
 
 async function loadNews(){if(!state.city)return;const id=state.city.id,topic=state.topic;placeholder('newsList','Consultando fontes de notícias...');
