@@ -497,3 +497,10 @@ html,body{background:#0b1525;color:var(--paper)}body{background-image:radial-gra
 .national-governor a{text-decoration:none;font-size:16px;text-align:center}
 @media(max-width:1050px){.governance-panel #vereadoresCards:has(.national-governor){grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:650px){.governance-panel #vereadoresCards:has(.national-governor){grid-template-columns:1fr}.national-president{padding:15px}.national-president strong{font-size:17px}}
+
+/* Fotos públicas Wikimedia na visão nacional, com fallback para sigla/ícone */
+.national-avatar,.national-governor-photo{position:relative;overflow:hidden}
+.national-governor-photo{width:48px;height:54px;display:grid;place-items:center;border-radius:10px;border:1px solid #477d9f;background:#275577;color:#d7f3ff;font-size:11px;font-weight:800;flex:none}
+.national-avatar img,.national-governor-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
+.national-avatar.has-photo img,.national-governor-photo.has-photo img{display:block}
+.national-governor{grid-template-columns:48px minmax(0,1fr) 26px}
