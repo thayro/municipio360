@@ -266,6 +266,17 @@ function newsPublisher(item){
  if(explicit)return explicit;
  try{const host=new URL(item.url).hostname.replace(/^www\./i,'');return host==='news.google.com'?'Veículo não identificado · Google Notícias':host}catch{return 'Fonte não identificada'}
 }
+function newsThumbnail(item){
+ const raw=String(item.imagem||item.socialimage||item.thumbnail||item.image||'').trim();
+ try{const url=new URL(raw);return ['https:','http:'].includes(url.protocol)?url.href:''}catch{return ''}
+}
+function newsPlatform(item){
+ try{
+  const host=new URL(item.url).hostname.replace(/^www\./i,'').toLowerCase();
+  const platforms={'instagram.com':'Instagram','facebook.com':'Facebook','x.com':'X','twitter.com':'X','youtube.com':'YouTube','tiktok.com':'TikTok','threads.net':'Threads'};
+  return Object.entries(platforms).find(([domain])=>host===domain||host.endsWith('.'+domain))?.[1]||'';
+ }catch{return ''}
+}
 let newsAutoScrollTimer=null,newsAutoScrollPausedUntil=0;
 function initNewsAutoScroll(){
  const list=$('newsList');if(!list)return;
@@ -296,7 +307,7 @@ function renderUnifiedMedia(){
  $('totalNews').textContent=total;
  $('newsList').innerHTML=origin==='redes'
  ?'<div class="placeholder">As redes sociais disponíveis estão nos links de busca acima. Não há coleta direta de posts autenticados neste momento.</div>'
- :entries.length?entries.slice(0,100).map(n=>'<a class="news-item news-editorial-item" href="'+escapeHtml(n.url)+'" target="_blank" rel="noopener noreferrer"><span class="news-type">'+(n._kind==='mencoes'?'REPERCUSSÃO':'NOTÍCIA')+'</span><div class="news-item-copy"><span class="source">Fonte: '+escapeHtml(newsPublisher(n))+'</span><h3>'+escapeHtml(n.titulo)+'</h3><div class="metadata">'+escapeHtml(formatDate(n.data))+'</div></div><span class="news-go" aria-hidden="true">↗</span></a>').join('')
+ :entries.length?entries.slice(0,100).map(n=>'<a class="news-item news-editorial-item" href="'+escapeHtml(n.url)+'" target="_blank" rel="noopener noreferrer"><span class="news-type">'+escapeHtml(newsPlatform(n)||newsPublisher(n))+'</span>'+(newsThumbnail(n)?'<img class="news-thumb" loading="lazy" referrerpolicy="no-referrer" src="'+escapeHtml(newsThumbnail(n))+'" alt="" onerror="this.remove()">':'')+'<div class="news-item-copy"><span class="source">Fonte: '+escapeHtml(newsPublisher(n))+'</span><h3>'+escapeHtml(n.titulo)+'</h3><div class="metadata">'+escapeHtml(formatDate(n.data))+'</div></div><span class="news-go" aria-hidden="true">↗</span></a>').join('')
  :'<div class="placeholder">Nenhuma publicação encontrada para este filtro nesta consulta.</div>';
  if(unifiedMedia.failures.length){
   const note=document.createElement('div');note.className='note';note.textContent='Fontes indisponíveis: '+unifiedMedia.failures.join(' | ');$('newsList').append(note);
