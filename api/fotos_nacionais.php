@@ -17,35 +17,47 @@ function normalizaTitulo(string $s): string {
  $s=iconv('UTF-8','ASCII//TRANSLIT//IGNORE',$s) ?: $s;
  return preg_replace('/[^a-z0-9]/','',strtolower($s)) ?: '';
 }
-$resultado=cached('fotos-nacionais-2026-v3',86400,static function() use ($nomes): array {
- $fotos=[];$falhas=0;$erros=[];
- foreach(array_chunk($nomes,5) as $grupo){
-  $params=http_build_query([
-   'action'=>'query','format'=>'json','redirects'=>'1','prop'=>'pageimages',
-   'piprop'=>'thumbnail','pithumbsize'=>240,'titles'=>implode('|',$grupo)
-  ],'','&',PHP_QUERY_RFC3986);
-  $ret=getJson('https://pt.wikipedia.org/w/api.php?'.$params,10);
-  if(!($ret['ok']??false)){
-   $ret=getJson('https://en.wikipedia.org/w/api.php?'.$params,10);
+
+$offset=max(0,min(count($nomes)-1,(int)($_GET['offset']??0)));
+$grupo=array_slice($nomes,$offset,4);
+function urlFoto(array $page): string {
+ $url=(string)($page['thumbnail']['source']??'');
+ return str_starts_with($url,'https://')&&parse_url($url,PHP_URL_HOST)==='upload.wikimedia.org'?$url:'';
+}
+function fotoPessoa(string $nome): array {
+ $lastError='';
+ foreach(['pt','en'] as $lang){
+  $base='https://'.$lang.'.wikipedia.org/w/api.php?';
+  $params=http_build_query(['action'=>'query','format'=>'json','redirects'=>1,'prop'=>'pageimages','piprop'=>'thumbnail','pithumbsize'=>240,'titles'=>$nome], '', '&', PHP_QUERY_RFC3986);
+  $r=getJson($base.$params,6);
+  if(!($r['ok']??false)){$lastError=(string)($r['error']??'Fonte indisponível');continue;}
+  foreach(($r['data']['query']['pages']??[]) as $page){
+   $url=urlFoto($page);
+   if($url)return ['foto'=>$url,'origem'=>$lang.'.wikipedia.org'];
   }
-  if(!($ret['ok']??false)){$falhas++;$erros[]=(string)($ret['error']??'Fonte indisponível');continue;}
-  $data=$ret['data']['query']??[];
-  $redirects=[];$pages=[];
-  foreach(($data['redirects']??[]) as $x){
-   $redirects[normalizaTitulo((string)($x['from']??''))]=normalizaTitulo((string)($x['to']??''));
-  }
-  foreach(($data['normalized']??[]) as $x){
-   $redirects[normalizaTitulo((string)($x['from']??''))]=normalizaTitulo((string)($x['to']??''));
-  }
-  foreach(($data['pages']??[]) as $page)$pages[normalizaTitulo((string)($page['title']??''))]=$page;
-  foreach($grupo as $nome){
-   $key=normalizaTitulo($nome);
-   for($i=0;$i<3 && isset($redirects[$key]);$i++)$key=$redirects[$key];
-   $url=(string)($pages[$key]['thumbnail']['source']??'');
-   $host=parse_url($url,PHP_URL_HOST);
-   if(str_starts_with($url,'https://')&&$host==='upload.wikimedia.org')$fotos[$nome]=$url;
+  // Busca artigo por título quando a forma usual do nome não encontra a página.
+  $search=http_build_query(['action'=>'query','format'=>'json','list'=>'search','srsearch'=>'intitle:"'.$nome.'"','srlimit'=>3], '', '&', PHP_QUERY_RFC3986);
+  $found=getJson($base.$search,6);
+  if(!($found['ok']??false))continue;
+  foreach(($found['data']['query']['search']??[]) as $candidate){
+   $title=(string)($candidate['title']??'');
+   if($title==='' || !str_contains(normalizaTitulo($title),normalizaTitulo(explode(' ',$nome)[0])))continue;
+   $q=http_build_query(['action'=>'query','format'=>'json','prop'=>'pageimages','piprop'=>'thumbnail','pithumbsize'=>240,'titles'=>$title], '', '&', PHP_QUERY_RFC3986);
+   $pageResponse=getJson($base.$q,6);
+   if(!($pageResponse['ok']??false))continue;
+   foreach(($pageResponse['data']['query']['pages']??[]) as $page){
+    $url=urlFoto($page);
+    if($url)return ['foto'=>$url,'origem'=>$lang.'.wikipedia.org'];
+   }
   }
  }
- return ['ok'=>count($fotos)>0,'fotos'=>$fotos,'aviso'=>$falhas?'Algumas consultas de imagens falharam: '.implode('; ',array_unique($erros)):''];
-});
-respond(['ok'=>true,'fotos'=>$resultado['fotos']??[],'quantidade'=>count($resultado['fotos']??[]),'aviso'=>$resultado['aviso']??($resultado['error']??'')]);
+ return ['foto'=>'','erro'=>$lastError ?: 'Retrato não encontrado'];
+}
+$fotos=[];$ausentes=[];$fontes=[];
+foreach($grupo as $nome){
+ $result=cached('foto-pessoa-nacional-2026-v5-'.normalizaTitulo($nome),86400,static fn()=>['ok'=>true]+fotoPessoa($nome));
+ $foto=(string)($result['foto']??'');
+ if($foto!==''){$fotos[$nome]=$foto;$fontes[$nome]=$result['origem']??'Wikipédia';}
+ else $ausentes[$nome]=$result['erro']??'Sem retrato verificado';
+}
+respond(['ok'=>true,'fotos'=>$fotos,'quantidade'=>count($fotos),'consultados'=>count($grupo),'ausentes'=>$ausentes,'fontes'=>$fontes,'offset'=>$offset]);
