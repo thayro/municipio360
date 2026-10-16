@@ -52,9 +52,10 @@ async function inspectRepresentativeMedia(panel){
     if(!['https:','http:'].includes(u.protocol))return;
     const title=String(x.titulo||'').trim();
     if(!title)return;
-    const domain=u.hostname.replace(/^www\./,'');
+    // Links RSS do Google Notícias têm domínio news.google.com; a fonte real vem em x.fonte.
+    const source=String(x.fonte||'').trim()||u.hostname.replace(/^www\./,'');
     const key=title.normalize('NFD').toLowerCase();
-    if(!unique.has(key)){unique.set(key,x);domains.add(domain);}
+    if(!unique.has(key)){unique.set(key,x);domains.add(source.toLocaleLowerCase('pt-BR'));}
    }catch{}
   });
   const items=[...unique.values()];
