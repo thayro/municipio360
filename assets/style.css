@@ -53,3 +53,25 @@ html,body{background:#0b1525;color:var(--paper)}body{background-image:radial-gra
 .social-panel .gov-links{margin-bottom:14px;flex-wrap:wrap;display:flex;gap:7px}
 .social-panel .gov-links a{padding:8px 10px;border:1px solid #38536c;border-radius:8px}
 .transparency-panel .contract-item{padding:10px;border-bottom:1px solid #2f465d}
+
+/* Menu lateral hambúrguer — desktop recolhível e mobile em gaveta */
+.menu-toggle{flex:0 0 42px;width:42px;height:42px;border:1px solid var(--line);border-radius:10px;background:#1d3553;color:var(--paper);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;transition:background .2s}
+.menu-toggle:hover,.menu-toggle:focus-visible{background:#294c70;outline:2px solid transparent;border-color:#7dd3fc}
+.menu-toggle span{display:block;width:19px;height:2px;border-radius:2px;background:currentColor}
+.sidebar-backdrop{display:none}
+.layout.sidebar-collapsed{grid-template-columns:0 minmax(0,1fr)}
+.layout.sidebar-collapsed .sidebar{visibility:hidden;overflow:hidden;padding:0;border:0;pointer-events:none}
+@media(max-width:1020px) and (min-width:701px){.layout.sidebar-collapsed{grid-template-columns:0 minmax(0,1fr)}}
+@media(max-width:700px){
+ .layout,.layout.sidebar-collapsed{display:block}
+ .sidebar{position:fixed;left:0;top:0;bottom:0;width:min(285px,85vw);height:100dvh;z-index:1100;display:flex;flex-direction:column;align-items:stretch;overflow-y:auto;overflow-x:hidden;padding:23px 13px;transform:translateX(-105%);transition:transform .25s ease;box-shadow:15px 0 40px rgba(0,0,0,.3)}
+ .sidebar .logo{font-size:21px;padding:0 8px 28px}.sidebar .logo small{font-size:10px}.sidebar .logomark{width:43px;height:43px;font-size:28px}
+ .sidebar .nav{font-size:13px;min-width:0;text-align:left;padding:13px}.sidebar .nav:first-letter{font-size:inherit}
+ .sidebar .navlabel,.sidebar .sidefooter{display:block}
+ .layout.sidebar-open .sidebar{transform:translateX(0);visibility:visible;pointer-events:auto}
+ .layout.sidebar-collapsed .sidebar{visibility:visible;overflow-y:auto;padding:23px 13px;border-right:1px solid var(--line);pointer-events:auto}
+ .sidebar-backdrop{position:fixed;inset:0;background:rgba(3,12,27,.68);z-index:1099}
+ .layout.sidebar-open .sidebar-backdrop{display:block}
+ header{flex-direction:row;align-items:flex-start;flex-wrap:wrap}.header-title{flex:1;min-width:190px}.header-actions{width:100%}
+}
+@media(prefers-reduced-motion:reduce){.sidebar,.menu-toggle{transition:none}}
