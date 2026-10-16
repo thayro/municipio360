@@ -119,3 +119,8 @@ html,body{background:#0b1525;color:var(--paper)}body{background-image:radial-gra
 
 /* Fallback da fotografia eleitoral somente se a imagem falhar */
 .official-person .person-avatar[hidden]{display:none!important}
+
+/* Representantes organizados dentro dos cards de Prefeitura e Câmara */
+.gov-card{min-width:0}
+.gov-card .official-grid{grid-template-columns:1fr;margin:12px 0;gap:9px}
+.gov-card .official-person{min-width:0}
