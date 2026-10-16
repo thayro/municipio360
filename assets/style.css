@@ -381,3 +381,12 @@ html,body{background:#0b1525;color:var(--paper)}body{background-image:radial-gra
 .city-score-info b{font-size:12px}
 .city-score-info small{font-size:10px;line-height:1.4;color:#b8cfe2}
 @media(max-width:420px){.city-score{gap:10px;padding:10px}.city-score-meter{width:70px;height:70px;flex-basis:70px}.city-score-meter strong{font-size:19px}}
+
+/* Sinais de redes sociais exibidos separadamente do score de notícias */
+.city-social-signals{display:flex;flex-direction:column;gap:9px;padding:13px;margin:0 0 16px;border:1px solid #345775;border-radius:12px;background:#12283e;min-width:0}
+.city-social-signals[hidden]{display:none!important}
+.city-social-signals>b{font-size:12px;color:#e1f2ff}
+.city-social-signals>small{font-size:10px;line-height:1.45;color:#b4cce0}
+.city-social-items{display:flex;flex-direction:column;gap:8px;max-height:210px;overflow-y:auto}
+.city-social-items a{font-size:11px;line-height:1.45;color:#96d6ff;overflow-wrap:anywhere;text-decoration:none}
+.city-social-items a:hover{text-decoration:underline}
