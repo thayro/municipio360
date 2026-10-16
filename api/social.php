@@ -9,13 +9,13 @@ $person=trim((string)($_GET['pessoa']??''));$person=mb_substr(strip_tags($person
 $term=$person!==''?'"'.$person.'" "'.$city.'"':'"'.$city.'" "'.$uf.'" (prefeitura OR prefeito OR vereadores OR "câmara municipal")';
 // GDELT agrega matérias indexadas, NÃO é acesso direto aos posts de redes sociais.
 $query=$term;
-$url='https://api.gdeltproject.org/api/v2/doc/doc?'.http_build_query(['query'=>$query,'mode'=>'artlist','format'=>'json','maxrecords'=>30,'timespan'=>'7d','sort'=>'datedesc'], '', '&', PHP_QUERY_RFC3986);
-$r=cached('social-context-'.$id.'-'.hash('sha256',$person),900,fn()=>getJson($url,18));
+$url='https://api.gdeltproject.org/api/v2/doc/doc?'.http_build_query(['query'=>$query,'mode'=>'artlist','format'=>'json','maxrecords'=>30,'timespan'=>'30d','sort'=>'datedesc'], '', '&', PHP_QUERY_RFC3986);
+$r=cached('social-context-30d-'.$id.'-'.hash('sha256',$person),900,fn()=>getJson($url,18));
 $articles=[];if($r['ok']??false){foreach(($r['data']['articles']??[]) as $a){$u=$a['url']??'';if(!is_string($u)||!preg_match('~^https?://~i',$u))continue;$articles[]=['titulo'=>(string)($a['title']??''),'url'=>$u,'fonte'=>(string)($a['domain']??''),'data'=>(string)($a['seendate']??'')];}}
 $source='GDELT';$fallbackError=null;
 if(!$articles){
  $rssQuery=$person!==''?'"'.$person.'" "'.$city.'"':'"'.$city.'" "'.$uf.'" (prefeitura OR prefeito OR vereadores OR câmara)';
- $fallback=cached('social-rss-v19-'.$id.'-'.hash('sha256',$person),900,fn()=>m360NewsRss($rssQuery,30));
+ $fallback=cached('social-rss-v20-30d-'.$id.'-'.hash('sha256',$person),900,fn()=>m360NewsRss($rssQuery,30));
  if($fallback['ok']??false){$articles=$fallback['noticias']??[];$source='Google Notícias RSS';}
  else $fallbackError=$fallback['error']??'Feed RSS indisponível';
 }
