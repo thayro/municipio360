@@ -392,3 +392,12 @@ html,body{background:#0b1525;color:var(--paper)}body{background-image:radial-gra
 .city-social-items a:hover{text-decoration:underline}
 
 .city-social-stat{display:flex;justify-content:space-between;gap:12px;font-size:11px;color:#c6dbed;padding:5px 0;border-bottom:1px solid #2b4965}.city-social-stat strong{color:#c2f1ff;font-size:13px}.city-social-tags{display:flex;flex-wrap:wrap;gap:6px}.city-social-tags span{font-size:10px;background:#244762;padding:5px 8px;border-radius:7px;color:#aee4ff}
+
+/* Feed unificado: notícias e repercussão no mesmo painel */
+.content>.news-panel{min-width:0}
+.content>.news-panel .unified-origin-filters{flex-shrink:0}
+.content>.news-panel .unified-person{flex-shrink:0;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.content>.news-panel .unified-person select{max-width:100%;min-width:0}
+.content>.news-panel .unified-social-links{display:flex;flex-wrap:wrap;gap:8px;flex-shrink:0}
+.content>.news-panel .news-list{flex:1 1 auto;min-height:140px;overflow-y:auto}
+@media(max-width:700px){.content>.news-panel .news-list{max-height:520px}}
