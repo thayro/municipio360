@@ -177,7 +177,7 @@ function renderNationalGovernance(){
 
 
 // Fontes governamentais verificadas, priorizadas antes de consultas externas.
-const nationalOfficialPhotos={'Luiz Inácio Lula da Silva':"https://www.gov.br/planejamento/pt-br/assuntos/noticias/2026/imagens/55156120202_eb131de887_o.jpg/@@images/image-1847-ab43b5834cceb5a118f2f34172060dff.jpeg"};
+const nationalOfficialPhotos={'Luiz Inácio Lula da Silva':"https://upload.wikimedia.org/wikipedia/commons/9/9e/Foto_oficial_de_Luiz_In%C3%A1cio_Lula_da_Silva_%28ombros%29_denoise.jpg"};
 // A rota de 2022 anteriormente usada retornou HTTP 404; mantemos fotos verificadas
 // e não disparamos consultas por visitante enquanto não houver endpoint confirmado.
 let nationalPhotoPromise=null;
