@@ -533,3 +533,12 @@ html,body{background:#0b1525;color:var(--paper)}body{background-image:radial-gra
 .map-panel .subpanel{border-top:0;margin-top:10px}
 @media(max-width:700px){.map-panel .svg-wrap{padding:4px}.map-panel .map-legend{align-items:flex-start}.map-panel .map-legend .legend-desc{width:100%;margin:3px 0 0}}
 @media(prefers-reduced-motion:reduce){.map-panel .svg-wrap .uf path{transition:none}}
+
+/* Pop-up institucional do mapa do Brasil: mouse, teclado e limites da tela */
+.state-map-tooltip{position:fixed;z-index:1200;left:0;top:0;max-width:min(275px,calc(100vw - 16px));min-width:205px;padding:12px 14px;background:#eef4fa;color:#1b3048;border:1px solid #9eb4cb;border-radius:8px;box-shadow:0 7px 23px rgba(2,12,25,.25);pointer-events:none;font-size:12px;line-height:1.5}
+.state-map-tooltip[hidden]{display:none!important}
+.state-map-tooltip strong{display:block;font-size:14px;border-bottom:1px solid #cdd9e5;padding-bottom:7px;margin-bottom:7px}
+.state-map-tooltip strong small{font-size:11px;color:#546d85}
+.state-map-tooltip span{display:block;margin-top:5px}
+.state-map-tooltip span b{font-weight:700}
+.state-map-tooltip .state-map-source{display:block;margin-top:9px;color:#5b7188;font-size:10px}
