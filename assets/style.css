@@ -333,3 +333,36 @@ html,body{background:#0b1525;color:var(--paper)}body{background-image:radial-gra
 .rep-dialog-content .rep-profile-body a{font-size:11px}
 .rep-dialog-content .rep-score-notice details a{display:block;margin:8px 0}
 @media(max-width:480px){.rep-dialog-head{padding:12px 14px}.rep-dialog-content{padding:14px}.rep-dialog-summary{grid-template-columns:62px minmax(0,1fr) 76px;gap:8px}.rep-dialog-summary .rep-photo img{width:60px;height:75px}.rep-dialog-summary .rep-score{width:76px}.rep-dialog-summary .rep-score-meter{width:65px;height:65px}.rep-dialog-summary .rep-score-meter strong{font-size:18px}}
+
+/* Perfil modal: reserva colunas reais e impede sobreposição da foto, avatar e indicador */
+.representative-profile-dialog .rep-dialog-summary{
+ display:grid;grid-template-columns:86px minmax(0,1fr) 104px;
+ gap:14px;align-items:center;min-width:0;
+}
+.representative-profile-dialog .rep-dialog-summary>.rep-photo{
+ grid-column:1;grid-row:1;width:86px;min-width:0;min-height:104px;
+ display:flex;align-items:center;justify-content:center;overflow:hidden;
+}
+.representative-profile-dialog .rep-dialog-summary>.rep-photo img,
+.representative-profile-dialog .rep-dialog-summary>.rep-photo .person-avatar{
+ display:grid;place-items:center;width:76px;height:92px;flex:0 0 76px;
+ border-radius:10px;object-fit:cover;
+}
+.representative-profile-dialog .rep-dialog-summary>.rep-photo img[hidden],
+.representative-profile-dialog .rep-dialog-summary>.rep-photo .person-avatar[hidden]{display:none!important}
+.representative-profile-dialog .rep-dialog-summary>.rep-details{
+ grid-column:2;grid-row:1;min-width:0;max-width:100%;overflow-wrap:anywhere;
+}
+.representative-profile-dialog .rep-dialog-summary>.rep-score{
+ grid-column:3;grid-row:1;justify-self:center;width:104px;max-width:100%;min-width:0;
+}
+.representative-profile-dialog .rep-dialog-summary>.rep-score .rep-score-state{
+ max-width:100%;overflow-wrap:anywhere;
+}
+@media(max-width:480px){
+ .representative-profile-dialog .rep-dialog-summary{grid-template-columns:64px minmax(0,1fr) 70px;gap:8px}
+ .representative-profile-dialog .rep-dialog-summary>.rep-photo{width:64px;min-height:78px}
+ .representative-profile-dialog .rep-dialog-summary>.rep-photo img,
+ .representative-profile-dialog .rep-dialog-summary>.rep-photo .person-avatar{width:60px;height:75px;flex-basis:60px}
+ .representative-profile-dialog .rep-dialog-summary>.rep-score{width:70px}
+}
