@@ -467,3 +467,19 @@ html,body{background:#0b1525;color:var(--paper)}body{background-image:radial-gra
  .news-type{grid-column:1/-1}
  .content>.news-panel .news-editorial-item h3{font-size:14px}
 }
+
+/* Barra única de filtros do Radar Municipal */
+.news-panel .news-filterbar{display:flex;align-items:center;gap:9px;min-width:0;margin:0 0 18px;padding-bottom:14px;border-bottom:1px solid #304961;white-space:nowrap}
+.news-panel .news-filterbar .unified-origin-filters{display:flex;flex:none;gap:6px;margin:0;padding:0;border:0;overflow:visible}
+.news-panel .news-filterbar .unified-origin-filters .pill{padding:10px 13px;font-size:11px}
+.news-panel .news-select-label{display:block;flex:0 1 185px;min-width:115px}
+.news-panel .news-select-label select{width:100%;min-height:39px;padding:9px 12px;background:#1b344d;color:#edf7ff;border:1px solid #46647f;border-radius:9px;font-size:11px;cursor:pointer}
+.news-panel .news-sources{position:relative;flex:0 0 auto;margin-left:auto}
+.news-panel .news-sources summary{list-style:none;cursor:pointer;padding:11px 13px;background:#1b344d;color:#cae8f7;border:1px solid #46647f;border-radius:9px;font-size:11px;font-weight:700}
+.news-panel .news-sources summary::-webkit-details-marker{display:none}
+.news-panel .news-sources[open] summary{border-color:#79c7eb}
+.news-panel .news-sources .unified-social-links{position:absolute;right:0;top:calc(100% + 8px);z-index:12;width:min(320px,calc(100vw - 40px));max-height:280px;overflow:auto;padding:12px;margin:0;box-shadow:0 14px 40px #061323c9;background:#1b3049;border:1px solid #46647f;border-radius:12px;white-space:normal}
+.news-panel .news-sources small{color:#acc5da;line-height:1.5;font-size:11px}
+.news-panel .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+@media(max-width:900px){.news-panel .news-filterbar{overflow-x:auto;overflow-y:visible;padding-bottom:16px;scrollbar-width:thin}.news-panel .news-select-label{flex:0 0 165px}.news-panel .news-sources{margin-left:0}}
+@media(min-width:901px){.news-panel .news-filterbar{flex-wrap:nowrap}}
