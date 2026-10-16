@@ -14,7 +14,7 @@ function selectUF(uf){if(!uf){resetBrazil();return;}hideMunicipalTooltip();setSt
 document.querySelectorAll('#mapa .uf').forEach(el=>el.classList.toggle('selected',el.dataset.uf===uf));placeholder('newsList','Selecione um município para notícias locais.');placeholder('contractsList','Selecione um município para licitações locais.');return loadCities(uf).then(()=>{if(state.uf===uf)loadMunicipalMap(uf)});}
 async function loadCities(uf){try{const d=await api('localidades.php?tipo=municipios&uf='+uf);if(state.uf!==uf)return;state.cities=Array.isArray(d.data)?d.data:[];setStatus(state.cities.length+' municípios carregados para '+uf+'. Selecione uma cidade.');$('citySearch').disabled=false;$('citySelect').disabled=false;renderCityOptions();$('totalCities').textContent=String(state.cities.length)+' em '+uf;}catch(e){$('citySelect').innerHTML='<option>Falha ao carregar municípios</option>';$('locationDetails').textContent=e.message;setStatus('Falha na consulta dos municípios: '+e.message,'error')}}
 function renderCityOptions(){const term=$('citySearch').value.toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g,'');const options=state.cities.filter(c=>c.nome.toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g,'').includes(term));const current=state.city?.id||'';$('citySelect').innerHTML='<option value="">Selecione o município ('+options.length+')</option>'+options.map(c=>'<option value="'+c.id+'" '+(String(c.id)===String(current)?'selected':'')+'>'+escapeHtml(c.nome)+'</option>').join('')}
-async function selectCity(id){const city=state.cities.find(c=>String(c.id)===String(id));if(!city)return;state.city=city;setStatus('Município '+city.nome+' selecionado. Consultando notícias e contratações...');$('placeTag').textContent=city.nome+' / '+ufCode(city);$('locationHeading').textContent=city.nome+' — '+ufCode(city);$('locationDetails').textContent='Código IBGE: '+city.id+' · Fontes: IBGE, notícias indexadas e PNCP.';$('ibgeLink').href='https://cidades.ibge.gov.br/brasil/'+city.id+'/panorama';$('prefeitoMeta').textContent='Prefeito atual: ainda não verificado automaticamente. Confira no portal da Prefeitura e no TSE.';$('vereadoresMeta').textContent='Composição atual da Câmara: consulte a fonte institucional; não inferimos vereadores apenas pelos resultados eleitorais.';const q=encodeURIComponent('prefeitura '+city.nome+' '+state.uf);$('govLinks').innerHTML='<a target="_blank" rel="noopener noreferrer" href="https://www.google.com/search?q='+q+'">Localizar prefeitura ↗</a><a target="_blank" rel="noopener noreferrer" href="https://www.google.com/search?q='+encodeURIComponent('câmara municipal '+city.nome+' '+state.uf)+'">Localizar Câmara ↗</a>';highlightMunicipality(String(city.id));loadCityMediaScore();loadGovernance();loadFinance();loadSocial();$('totalNews').textContent='…';$('totalBids').textContent='…';loadNews();loadContracts();}
+async function selectCity(id){const city=state.cities.find(c=>String(c.id)===String(id));if(!city)return;state.city=city;setStatus('Município '+city.nome+' selecionado. Consultando notícias e contratações...');$('placeTag').textContent=city.nome+' / '+ufCode(city);$('locationHeading').textContent=city.nome+' — '+ufCode(city);$('locationDetails').textContent='Código IBGE: '+city.id+' · Fontes: IBGE, notícias indexadas e PNCP.';$('ibgeLink').href='https://cidades.ibge.gov.br/brasil/'+city.id+'/panorama';$('prefeitoMeta').textContent='Prefeito atual: ainda não verificado automaticamente. Confira no portal da Prefeitura e no TSE.';$('vereadoresMeta').textContent='Composição atual da Câmara: consulte a fonte institucional; não inferimos vereadores apenas pelos resultados eleitorais.';const q=encodeURIComponent('prefeitura '+city.nome+' '+state.uf);$('govLinks').innerHTML='<a target="_blank" rel="noopener noreferrer" href="https://www.google.com/search?q='+q+'">Localizar prefeitura ↗</a><a target="_blank" rel="noopener noreferrer" href="https://www.google.com/search?q='+encodeURIComponent('câmara municipal '+city.nome+' '+state.uf)+'">Localizar Câmara ↗</a>';highlightMunicipality(String(city.id));loadCityMediaScore();loadCitySocialSignals();loadGovernance();loadFinance();loadSocial();$('totalNews').textContent='…';$('totalBids').textContent='…';loadNews();loadContracts();}
 
 function representativeSocialLinks(x){
  const q=[x.nome,state.city?.nome||'',state.uf||''].filter(Boolean).join(' ');
@@ -82,6 +82,35 @@ document.addEventListener('click',event=>{
  if(!dialog.open)dialog.showModal();
 });
 
+
+// Publicações sociais verificáveis não são confundidas com sentimento ou aprovação municipal.
+let socialSignalsRequest=0;
+async function loadCitySocialSignals(){
+ const city=state.city,box=$('citySocialSignals');if(!city||!box)return;
+ const current=++socialSignalsRequest,id=String(city.id);
+ box.hidden=false;
+ $('citySocialStatus').textContent='Consultando YouTube…';
+ $('citySocialItems').replaceChildren();
+ try{
+  const data=await api('redes_cidade.php?id='+encodeURIComponent(id));
+  if(current!==socialSignalsRequest||String(state.city?.id)!==id)return;
+  if(!data.disponivel){
+   $('citySocialStatus').textContent='YouTube: integração aguardando configuração da chave de API.';
+   return;
+  }
+  const items=Array.isArray(data.publicacoes)?data.publicacoes:[];
+  $('citySocialStatus').textContent='YouTube: '+items.length+' vídeos públicos encontrados na busca dos últimos 30 dias. Não representam a opinião da população.';
+  items.slice(0,5).forEach(item=>{
+   const url=String(item.url||'');if(!url.startsWith('https://www.youtube.com/watch?v='))return;
+   const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener noreferrer';
+   a.textContent=String(item.titulo||'Vídeo')+' — '+String(item.canal||'Canal');
+   $('citySocialItems').append(a);
+  });
+ }catch(e){
+  if(current!==socialSignalsRequest||String(state.city?.id)!==id)return;
+  $('citySocialStatus').textContent='Dados do YouTube indisponíveis nesta consulta.';
+ }
+}
 
 // Tom da cobertura municipal; não mede desempenho, aprovação ou sentimento de redes sociais.
 let cityScoreRequest=0;
