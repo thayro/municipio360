@@ -546,25 +546,3 @@ html,body{background:#0b1525;color:var(--paper)}body{background-image:radial-gra
 /* Painel de licitações fica fora de .content, como filho direto de .main. */
 .main > .contracts-panel{margin-top:24px;box-shadow:0 8px 22px rgba(0,0,0,.12)}
 @media(max-width:700px){.main > .contracts-panel{margin-top:20px}}
-
-/* Município360 · ranking de população ao lado do mapa nacional */
-@media(min-width:1381px){.content>.map-panel{grid-column:span 2}}
-.map-ranking-layout{display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:13px;align-items:stretch;min-height:0;flex:1}
-.map-ranking-layout>.svg-wrap{min-width:0;min-height:280px;height:auto!important}
-.map-ranking{min-width:0;display:flex;flex-direction:column;gap:9px;padding:13px 11px;background:#1b304a;border:1px solid #3b536e;border-radius:10px}
-.map-ranking-heading{display:flex;flex-direction:column;gap:3px}
-.map-ranking-heading strong{font-size:13px;color:#edf5ff}
-.map-ranking-heading span{font-size:9px;letter-spacing:.08em;color:#a7c4dc}
-.map-ranking h3{font-size:12px;margin:6px 0;color:#f0f7ff}
-.map-ranking ol{margin:0;padding:0;list-style:none;display:grid;gap:10px}
-.map-ranking li{font-size:10px;color:#c5d9eb}
-.map-ranking-item{display:block;width:100%;padding:0;border:0;background:transparent;color:inherit;text-align:left;cursor:pointer}
-.map-ranking-item:hover b,.map-ranking-item:focus-visible b{text-decoration:underline}
-.map-ranking-row{display:flex;justify-content:space-between;align-items:baseline;gap:7px;margin-bottom:5px}
-.map-ranking-row b{font-weight:600}.map-ranking-row strong{white-space:nowrap;font-size:10px;color:#e9f4ff}
-.map-ranking-bar{display:block;height:5px;background:#354a61;border-radius:8px;overflow:hidden}
-.map-ranking-bar>span{display:block;height:100%;background:#91bcd4;border-radius:8px}
-.map-ranking>small{font-size:10px;color:#a9bdd0;line-height:1.4;margin-top:auto}
-.map-ranking>a{font-size:10px;color:#bfe2f8}
-@media(max-width:800px){.map-ranking-layout{grid-template-columns:1fr}.map-ranking-layout>.svg-wrap{height:340px!important}.map-ranking{gap:8px}.map-ranking ol{grid-template-columns:1fr 1fr;gap:10px 12px}}
-@media(max-width:420px){.map-ranking ol{grid-template-columns:1fr}.map-ranking-layout>.svg-wrap{height:300px!important}}
