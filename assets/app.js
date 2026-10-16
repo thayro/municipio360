@@ -466,6 +466,6 @@ async function locateVisitor(){
 }
 $('locateMe').addEventListener('click',locateVisitor);
 
-loadStates().then(()=>{if(!state.uf)locateVisitor();});
+loadStates();
 loadBrazilFeeds();
 })();
