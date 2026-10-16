@@ -558,3 +558,10 @@ html,body{background:#0b1525;color:var(--paper)}body{background-image:radial-gra
  .news-editorial-item:has(.news-thumb) .news-item-copy{grid-column:2}
  .news-editorial-item:has(.news-thumb) .news-go{grid-column:3}
 }
+
+/* Ação independente para buscar foto apenas nos cards sem miniatura */
+.news-card-shell{display:flex;flex-direction:column;min-width:0;gap:5px}
+.news-card-shell>.news-editorial-item{width:100%;box-sizing:border-box}
+.news-fetch-image{align-self:flex-start;border:1px solid #426582;background:#203a55;color:#cbe8f6;border-radius:7px;padding:6px 11px;font-size:10px;cursor:pointer}
+.news-fetch-image:hover:not(:disabled){background:#2c4f6d}
+.news-fetch-image:disabled{opacity:.65;cursor:default}
