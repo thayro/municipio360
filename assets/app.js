@@ -261,6 +261,27 @@ function mediaDate(x){
  if(/^\d{14}$/.test(v))return Date.parse(v.slice(0,4)+'-'+v.slice(4,6)+'-'+v.slice(6,8)+'T'+v.slice(8,10)+':'+v.slice(10,12)+':'+v.slice(12,14)+'Z')||0;
  const t=Date.parse(v);return Number.isFinite(t)?t:0;
 }
+function newsPublisher(item){
+ const explicit=String(item.fonte||item.veiculo||item.publisher||'').trim();
+ if(explicit)return explicit;
+ try{const host=new URL(item.url).hostname.replace(/^www\./i,'');return host==='news.google.com'?'Veículo não identificado · Google Notícias':host}catch{return 'Fonte não identificada'}
+}
+let newsAutoScrollTimer=null,newsAutoScrollPausedUntil=0;
+function initNewsAutoScroll(){
+ const list=$('newsList');if(!list)return;
+ const pause=()=>{newsAutoScrollPausedUntil=Date.now()+12000};
+ ['pointerenter','focusin','wheel','touchstart','pointerdown'].forEach(name=>list.addEventListener(name,pause,{passive:true}));
+ list.addEventListener('pointerleave',()=>{newsAutoScrollPausedUntil=Date.now()+3500});
+ document.addEventListener('visibilitychange',()=>{newsAutoScrollPausedUntil=Date.now()+5000});
+ if(newsAutoScrollTimer!==null)return;
+ newsAutoScrollTimer=window.setInterval(()=>{
+  if(document.hidden||window.matchMedia('(prefers-reduced-motion: reduce)').matches||Date.now()<newsAutoScrollPausedUntil||list.matches(':hover')||list.contains(document.activeElement))return;
+  const max=list.scrollHeight-list.clientHeight;
+  if(max<30)return;
+  if(list.scrollTop>=max-2){newsAutoScrollPausedUntil=Date.now()+3500;list.scrollTo({top:0,behavior:'smooth'});return}
+  list.scrollTop+=1;
+ },65);
+}
 function renderUnifiedMedia(){
  const origin=unifiedMedia.origin;
  const seen=new Set();
@@ -275,7 +296,7 @@ function renderUnifiedMedia(){
  $('totalNews').textContent=total;
  $('newsList').innerHTML=origin==='redes'
  ?'<div class="placeholder">As redes sociais disponíveis estão nos links de busca acima. Não há coleta direta de posts autenticados neste momento.</div>'
- :entries.length?entries.slice(0,100).map(n=>'<a class="news-item news-editorial-item" href="'+escapeHtml(n.url)+'" target="_blank" rel="noopener noreferrer"><span class="news-type">'+(n._kind==='mencoes'?'REPERCUSSÃO':'NOTÍCIA')+'</span><div class="news-item-copy"><span class="source">'+escapeHtml(n.fonte||n.origem||'Fonte externa')+'</span><h3>'+escapeHtml(n.titulo)+'</h3><div class="metadata">'+escapeHtml(formatDate(n.data))+'</div></div><span class="news-go" aria-hidden="true">↗</span></a>').join('')
+ :entries.length?entries.slice(0,100).map(n=>'<a class="news-item news-editorial-item" href="'+escapeHtml(n.url)+'" target="_blank" rel="noopener noreferrer"><span class="news-type">'+(n._kind==='mencoes'?'REPERCUSSÃO':'NOTÍCIA')+'</span><div class="news-item-copy"><span class="source">'+escapeHtml(newsPublisher(n))+'</span><h3>'+escapeHtml(n.titulo)+'</h3><div class="metadata">'+escapeHtml(formatDate(n.data))+'</div></div><span class="news-go" aria-hidden="true">↗</span></a>').join('')
  :'<div class="placeholder">Nenhuma publicação encontrada para este filtro nesta consulta.</div>';
  if(unifiedMedia.failures.length){
   const note=document.createElement('div');note.className='note';note.textContent='Fontes indisponíveis: '+unifiedMedia.failures.join(' | ');$('newsList').append(note);
@@ -551,6 +572,7 @@ $('locateMe').addEventListener('click',locateVisitor);
 
 // Conecta os eventos do mapa nacional também na primeira abertura da página.
 wireMap();
+initNewsAutoScroll();
 loadStates();
 loadBrazilFeeds();
 })();
