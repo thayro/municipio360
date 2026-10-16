@@ -312,3 +312,24 @@ html,body{background:#0b1525;color:var(--paper)}body{background-image:radial-gra
  .governance-panel .gov-mayor .rep-score-meter,.governance-panel .rep-modern .rep-score-meter{width:64px;height:64px}
  .governance-panel .gov-mayor .rep-score-meter strong{font-size:18px}
 }
+
+/* Modal de perfil sem alterar o tamanho dos cards */
+.governance-panel .rep-modern>.rep-profile-open{grid-column:1/-1;background:transparent;color:#a5dbff;border:0;border-top:1px solid #35506a;padding:11px 0 0;text-align:left;font-size:11px;font-weight:700;cursor:pointer;width:100%}
+.governance-panel .rep-modern>.rep-profile-open:hover{color:#fff}
+.governance-panel .rep-modern>.rep-profile-body[hidden]{display:none!important}
+.representative-profile-dialog{width:min(580px,calc(100vw - 32px));max-height:min(80vh,740px);border:1px solid #496985;border-radius:18px;padding:0;background:#14263d;color:#e9f4ff;box-shadow:0 24px 75px #0009;overflow:hidden}
+.representative-profile-dialog::backdrop{background:rgba(3,12,24,.76);backdrop-filter:blur(4px)}
+.rep-dialog-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 20px;border-bottom:1px solid #35516e}
+.rep-dialog-head h3{margin:0;font-size:17px}
+.rep-dialog-close{width:34px;height:34px;display:grid;place-items:center;background:#203c55;color:#d9edff;border:1px solid #45647c;border-radius:9px;cursor:pointer}
+.rep-dialog-content{padding:20px;overflow-y:auto;max-height:calc(min(80vh,740px) - 70px)}
+.rep-dialog-summary{display:grid;grid-template-columns:78px minmax(0,1fr) 92px;align-items:center;gap:14px;padding-bottom:18px;border-bottom:1px solid #344c64;margin-bottom:16px}
+.rep-dialog-summary .rep-photo img{width:76px;height:92px;object-fit:cover;border-radius:10px}
+.rep-dialog-summary .rep-details{display:flex;flex-direction:column;gap:6px;min-width:0}
+.rep-dialog-summary .rep-details strong{font-size:17px}
+.rep-dialog-summary .rep-details small{font-size:11px;color:#c6d6e6}
+.rep-dialog-summary .rep-score{width:90px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+.rep-dialog-content>.rep-profile-body{display:flex;flex-direction:column;gap:13px;overflow-wrap:anywhere}
+.rep-dialog-content .rep-profile-body a{font-size:11px}
+.rep-dialog-content .rep-score-notice details a{display:block;margin:8px 0}
+@media(max-width:480px){.rep-dialog-head{padding:12px 14px}.rep-dialog-content{padding:14px}.rep-dialog-summary{grid-template-columns:62px minmax(0,1fr) 76px;gap:8px}.rep-dialog-summary .rep-photo img{width:60px;height:75px}.rep-dialog-summary .rep-score{width:76px}.rep-dialog-summary .rep-score-meter{width:65px;height:65px}.rep-dialog-summary .rep-score-meter strong{font-size:18px}}
