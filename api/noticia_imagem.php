@@ -48,10 +48,12 @@ function googleNewsOriginal(string $link): ?string {
 }
 
 $url=(string)($_GET['url']??'');
+$googleLink=strtolower((string)parse_url($url,PHP_URL_HOST))==='news.google.com';
+$resolvedOriginal=false;
 if(strlen($url)>1800 || !filter_var($url,FILTER_VALIDATE_URL))respond(['ok'=>false,'error'=>'URL inválida'],400);
 if(strtolower((string)parse_url($url,PHP_URL_HOST))==='news.google.com' && function_exists('curl_init')) {
  $original=googleNewsOriginal($url);
- if($original!==null)$url=$original;
+ if($original!==null){$url=$original;$resolvedOriginal=true;}
 }
 $parts=parse_url($url);
 if(($parts['scheme']??'')!=='https'||isset($parts['user'])||isset($parts['pass'])||isset($parts['port']))respond(['ok'=>false,'error'=>'Somente HTTPS público'],400);
@@ -63,8 +65,8 @@ foreach($ips as $ip){
  if(!filter_var($ip,FILTER_VALIDATE_IP,FILTER_FLAG_IPV4|FILTER_FLAG_NO_PRIV_RANGE|FILTER_FLAG_NO_RES_RANGE))respond(['ok'=>false,'error'=>'Destino não público'],400);
 }
 $cacheDir=dirname(__DIR__).'/cache';
-$key=$cacheDir.'/'.hash('sha256','news-preview-v2-'.$url).'.json';
-if(is_file($key)&&time()-filemtime($key)<86400){
+$key=$cacheDir.'/'.hash('sha256','news-preview-v3-'.$url).'.json';
+if(is_file($key)&&time()-filemtime($key)<3600){
  $old=json_decode((string)file_get_contents($key),true);
  if(is_array($old))respond($old);
 }
@@ -93,6 +95,6 @@ if(is_string($body)&&strlen($body)<=2500000&&$status===200&&str_contains(strtolo
   }
  }
 }
-$result=['ok'=>true,'imagem'=>$image,'encontrada'=>$image!==null];
+$result=['ok'=>true,'imagem'=>$image,'encontrada'=>$image!==null,'diagnostico'=>['origem_google'=>$googleLink,'url_original_resolvida'=>$resolvedOriginal,'http_fonte'=>$status,'tipo_resposta'=>$type,'motivo'=>$image!==null?'imagem_identificada':($googleLink&&!$resolvedOriginal?'link_google_nao_resolvido':($status!==200?'pagina_http_'.$status:'sem_metadados_de_imagem'))]];
 if(is_dir($cacheDir)&&is_writable($cacheDir))@file_put_contents($key,json_encode($result,JSON_UNESCAPED_SLASHES),LOCK_EX);
 respond($result);
