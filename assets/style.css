@@ -194,3 +194,38 @@ html,body{background:#0b1525;color:var(--paper)}body{background-image:radial-gra
 .rep-identity{flex:1 1 100%;flex-direction:row;justify-content:flex-start;align-items:center;gap:12px}
 .rep-details{flex:1 1 100%}
 @media(min-width:560px){.rep-identity{flex:0 0 180px;align-items:flex-start}.rep-details{flex:1 1 170px}}
+
+/* Cartões proporcionais no dashboard: mesma altura e largura por coluna.
+   Conteúdos extensos rolam dentro do cartão, sem aumentar toda a linha. */
+.content{align-items:stretch}
+.content>.panel:not(.governance-panel){
+  height:620px;
+  min-height:0;
+  min-width:0;
+  margin-top:0;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+.content>.panel:not(.governance-panel)>.heading{flex-shrink:0}
+.content>.news-panel .news-list,
+.content>.contracts-panel .contracts-list,
+.content>.social-panel #socialList,
+.content>.transparency-panel #financeList{
+  flex:1 1 auto;
+  min-height:0;
+  max-height:none;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+}
+.content>.social-panel .gov-links{flex-shrink:0}
+.content>.map-panel .svg-wrap{height:clamp(280px,36vh,450px);min-height:0;flex:1 1 auto}
+.content>.governance-panel{height:auto;align-self:stretch}
+@media(max-width:700px){
+  .content>.panel:not(.governance-panel){height:auto;min-height:0;overflow:visible}
+  .content>.map-panel .svg-wrap{height:370px;flex:none}
+  .content>.news-panel .news-list,
+  .content>.contracts-panel .contracts-list,
+  .content>.social-panel #socialList,
+  .content>.transparency-panel #financeList{max-height:430px;flex:none;overflow-y:auto}
+}
