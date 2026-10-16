@@ -29,7 +29,7 @@ function representativeCard(x){
  return '<article class="official-person rep-modern">'+
   '<div class="rep-photo">'+photo+'</div>'+
   '<div class="rep-details"><strong>'+escapeHtml(x.nome)+'</strong><small>'+escapeHtml(x.cargo)+'</small><small class="rep-party">'+escapeHtml(x.partido||'Partido não informado')+'</small></div>'+
-  '<div class="rep-score" data-person="'+escapeHtml(x.nome)+'"><div class="rep-score-meter" role="status" aria-label="Índice de tom de notícias ainda não calculado"><strong>…</strong><span>/ 1000</span></div><small>Tom da mídia</small><small class="rep-score-state">Calculando automaticamente</small></div>'+
+  '<div class="rep-score" data-person="'+escapeHtml(x.nome)+'"><div class="rep-score-meter" role="status" aria-label="Índice de tom de notícias ainda não calculado"><strong>…</strong><span>/ 1000</span></div></div>'+
   '<button type="button" class="rep-profile-open" aria-haspopup="dialog">Ver perfil ↗</button><div class="rep-profile-body" hidden>'+
   '<small>'+escapeHtml(x.fonte||'Fonte eleitoral')+' · mandato atual não verificado</small>'+
   (x.url?'<a target="_blank" rel="noopener noreferrer" href="'+escapeHtml(x.url)+'">Consultar fonte oficial ↗</a>':'')+
