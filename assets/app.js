@@ -121,10 +121,14 @@ async function inspectRepresentativeMedia(panel){
    meter.querySelector('strong').textContent=String(points);
    meter.setAttribute('aria-label','Índice experimental de tom das manchetes: '+points+' de 1000');
    meter.style.setProperty('--score-progress',(points/1000*100).toFixed(1)+'%');
+   const color=points<350?'#f87171':points<500?'#fb923c':points<650?'#60a5fa':'#4ade80';
+   meter.style.setProperty('--score-color',color);
    info='<small>'+labels+' Pontuação baseada somente em palavras das manchetes; pode classificar mal contexto, ironia e citações.</small>';
   }else{
    meter.querySelector('strong').textContent='N/D';
    meter.setAttribute('aria-label','Dados insuficientes para calcular o indicador');
+   meter.style.setProperty('--score-color','#8091a7');
+   meter.style.setProperty('--score-progress','0%');
    info='<small>Dados insuficientes para uma pontuação: '+labels+' Mínimo de 5 matérias e 3 fontes independentes. '+escapeHtml(r.aviso||'')+'</small>';
   }
   const notice=card.querySelector('.rep-score-notice');
@@ -132,7 +136,7 @@ async function inspectRepresentativeMedia(panel){
   if(status)status.textContent=items.length>=5&&domains.size>=3?'Calculado automaticamente':'Sem dados suficientes';
  }catch(e){
   if(status)status.textContent='Fonte indisponível';
-  const meter=panel.querySelector('.rep-score-meter strong');if(meter)meter.textContent='N/D';
+  const meter=panel.querySelector('.rep-score-meter');if(meter){meter.querySelector('strong').textContent='N/D';meter.style.setProperty('--score-color','#8091a7');meter.style.setProperty('--score-progress','0%');}
   card.querySelector('.rep-score-notice').textContent='Não foi possível consultar as fontes: '+e.message;
  }
 }
