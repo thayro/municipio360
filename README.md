@@ -23,3 +23,10 @@ Requisições HTTPS com verificação ativa e URLs externas fixas. Cache JSON te
 
 ## v1.9 – Resiliência de notícias
 Quando o GDELT não responde, o módulo social, as notícias locais e o feed nacional tentam Google Notícias RSS. Isso não equivale a acesso direto a redes sociais. O arquivo privado /home/nexcode/ssl-municipio360/ibge-ca-bundle.pem permanece configurado em api/common.php; preservá-lo no servidor.
+
+
+### Integração de publicações sociais (YouTube)
+
+O endpoint `api/redes_cidade.php?id=<codigo-IBGE>` usa a **YouTube Data API v3**, somente quando a variável de ambiente `MUNICIPIO360_YOUTUBE_API_KEY` estiver configurada no PHP/Apache/FPM. Configure essa variável no servidor, sem inserir a chave no repositório ou no JavaScript. Habilite a YouTube Data API v3 no Google Cloud e restrinja a chave à API. Após configurar a variável, reinicie o serviço PHP-FPM se necessário. A busca usa até 20 vídeos públicos publicados nos últimos 30 dias e cache de 6 horas.
+
+Sem chave, a seção apresenta status indisponível e **não atribui score social**. YouTube não representa todas as redes, nem sentimento dos moradores. Para Reddit é necessário OAuth autorizado; Instagram/Facebook exigem permissões compatíveis com as APIs oficiais. Não misture menções em notícias indexadas com posts nativos de redes sociais.
