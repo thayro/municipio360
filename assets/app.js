@@ -25,30 +25,64 @@ function representativeSocialLinks(x){
  links.map(([label,query])=>'<a href="https://www.google.com/search?q='+encodeURIComponent(query)+'" target="_blank" rel="noopener noreferrer">Buscar '+escapeHtml(label)+' ↗</a>').join('')+'</div></div>';
 }
 function representativeCard(x){
- return '<article class="official-person">'+(x.foto?'<img loading="lazy" referrerpolicy="no-referrer" onerror="this.hidden=true;this.nextElementSibling.hidden=false" src="'+escapeHtml(x.foto)+'" alt="Foto eleitoral de '+escapeHtml(x.nome)+'"><span class="person-avatar" hidden aria-hidden="true">♙</span>':'<span class="person-avatar" aria-hidden="true">♙</span>')+'<div><strong>'+escapeHtml(x.nome)+'</strong><small>'+escapeHtml(x.cargo)+' · '+escapeHtml(x.partido||'Partido não informado')+'</small><small>'+escapeHtml(x.fonte)+' · referência não confirmada para mandato atual</small>'+(x.url?'<a target="_blank" rel="noopener noreferrer" href="'+escapeHtml(x.url)+'">Consultar fonte ↗</a>':'')+representativeSocialLinks(x)+'<div class="media-score" data-person="'+escapeHtml(x.nome)+'"><button type="button" class="btn small media-score-button">Analisar cobertura</button><small>Notícias indexadas; não é nota de reputação.</small></div>'+'</div></article>';
+ const photo=x.foto?'<img loading="lazy" referrerpolicy="no-referrer" onerror="this.hidden=true;this.nextElementSibling.hidden=false" src="'+escapeHtml(x.foto)+'" alt="Foto eleitoral de '+escapeHtml(x.nome)+'"><span class="person-avatar" hidden aria-hidden="true">♙</span>':'<span class="person-avatar" aria-hidden="true">♙</span>';
+ return '<article class="official-person"><div class="rep-identity"><div class="rep-photo">'+photo+'</div><div class="rep-score" data-person="'+escapeHtml(x.nome)+'"><div class="rep-score-meter" role="status" aria-label="Índice de tom de notícias ainda não calculado"><strong>—</strong><span>/ 1000</span></div><small>Tom da mídia</small><button type="button" class="btn small rep-score-refresh">Calcular</button></div></div><div class="rep-details"><strong>'+escapeHtml(x.nome)+'</strong><small>'+escapeHtml(x.cargo)+' · '+escapeHtml(x.partido||'Partido não informado')+'</small><small>'+escapeHtml(x.fonte)+' · mandato atual não verificado</small>'+(x.url?'<a target="_blank" rel="noopener noreferrer" href="'+escapeHtml(x.url)+'">Consultar fonte ↗</a>':'')+representativeSocialLinks(x)+'<div class="rep-score-notice">Indicador experimental sobre manchetes indexadas, não mede caráter, aprovação ou desempenho. Sem pontuação quando não houver evidências suficientes.</div></div></article>';
+}
+// Classificação conservadora de linguagem de títulos. Não decide a veracidade dos fatos.
+function scoreHeadline(text){
+ const s=String(text||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+ const positive=['premia','premiado','reconhec','aprovad','homenage','conquista','destaque','elogia'];
+ const negative=['condenad','cassad','denunciad','investigad','acusad','critica','multad','afastad'];
+ const plus=positive.some(w=>s.includes(w)),minus=negative.some(w=>s.includes(w));
+ return plus===minus?0:plus?1:-1;
 }
 async function inspectRepresentativeMedia(button){
- const panel=button.closest('.media-score'),city=state.city;
- if(!panel||!city)return;
+ const panel=button.closest('.rep-score'),card=button.closest('.official-person'),city=state.city;
+ if(!panel||!card||!city)return;
  const id=String(city.id),name=panel.dataset.person;
- button.disabled=true;button.textContent='Consultando notícias...';
+ button.disabled=true;button.textContent='Consultando…';
  try{
   const r=await api('social.php?id='+encodeURIComponent(id)+'&pessoa='+encodeURIComponent(name));
   if(String(state.city?.id)!==id||!panel.isConnected)return;
-  const items=(r.noticias_indexadas||[]).filter(x=>x&&/^https?:\/\//i.test(String(x.url||'')));
-  const unique=new Map();
-  items.forEach(x=>{try{const domain=new URL(x.url).hostname.replace(/^www\./,'');if(!unique.has(domain))unique.set(domain,x)}catch{}});
-  const n=items.length,sources=unique.size;
-  // Mede diversidade de veículos, não qualidade moral ou aprovação popular.
-  const coverage=Math.min(100,Math.round(sources/10*100));
-  panel.innerHTML='<div class="media-score-reading"><strong>'+coverage+'/100</strong><span>Índice de cobertura · '+n+' matérias / '+sources+' fontes</span></div><small>Escala: 10 ou mais fontes distintas = 100. Não mede reputação, aprovação nem sentimento.</small>'+
-   (items.length?'<details><summary>Ver matérias consultadas</summary>'+items.slice(0,10).map(x=>'<a href="'+escapeHtml(x.url)+'" target="_blank" rel="noopener noreferrer">'+escapeHtml(x.titulo||x.fonte||'Notícia')+' ↗</a>').join('')+'</details>':'<small>Sem matérias encontradas nesta consulta; ausência de cobertura não significa reputação negativa.</small>');
- }catch(e){button.disabled=false;button.textContent='Tentar novamente';const note=document.createElement('small');note.textContent='Consulta indisponível: '+e.message;panel.appendChild(note);}
+  const unique=new Map(),domains=new Set();
+  (r.noticias_indexadas||[]).forEach(x=>{
+   try{
+    const u=new URL(String(x.url||''));
+    if(!['https:','http:'].includes(u.protocol))return;
+    const title=String(x.titulo||'').trim();
+    if(!title)return;
+    const domain=u.hostname.replace(/^www\./,'');
+    const key=title.normalize('NFD').toLowerCase();
+    if(!unique.has(key)){unique.set(key,x);domains.add(domain);}
+   }catch{}
+  });
+  const items=[...unique.values()];
+  const meter=panel.querySelector('.rep-score-meter');
+  let info='';const labels=items.length+' matérias, '+domains.size+' fontes distintas (janela de até 7 dias).';
+  if(items.length>=5&&domains.size>=3){
+   const tones=items.map(x=>scoreHeadline(x.titulo));
+   const points=Math.round(500+tones.reduce((a,b)=>a+b,0)/tones.length*350);
+   meter.querySelector('strong').textContent=String(points);
+   meter.setAttribute('aria-label','Índice experimental de tom das manchetes: '+points+' de 1000');
+   meter.style.setProperty('--score-progress',(points/1000*100).toFixed(1)+'%');
+   info='<small>'+labels+' Pontuação baseada somente em palavras das manchetes; pode classificar mal contexto, ironia e citações.</small>';
+  }else{
+   meter.querySelector('strong').textContent='—';
+   info='<small>Dados insuficientes para uma pontuação: '+labels+' Mínimo de 5 matérias e 3 fontes independentes.</small>';
+  }
+  const notice=card.querySelector('.rep-score-notice');
+  notice.innerHTML=info+(items.length?'<details><summary>Ver manchetes e fontes</summary>'+items.slice(0,15).map(x=>'<a href="'+escapeHtml(x.url)+'" target="_blank" rel="noopener noreferrer">'+escapeHtml(x.titulo||'Notícia')+' ↗</a>').join('')+'</details>':'<small>Não foram encontradas matérias; isso não representa avaliação negativa.</small>');
+  button.textContent='Atualizar';
+ }catch(e){
+  button.textContent='Tentar novamente';
+  card.querySelector('.rep-score-notice').textContent='Não foi possível consultar as fontes: '+e.message;
+ }finally{button.disabled=false;}
 }
 document.addEventListener('click',event=>{
- const b=event.target.closest('.media-score-button');
+ const b=event.target.closest('.rep-score-refresh');
  if(b)inspectRepresentativeMedia(b);
 });
+
 async function loadGovernance(){
  const city=state.city;if(!city)return;
  const mayorCards=$('prefeitoCards'),councilCards=$('vereadoresCards');
