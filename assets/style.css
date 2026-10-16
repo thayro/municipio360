@@ -483,3 +483,17 @@ html,body{background:#0b1525;color:var(--paper)}body{background-image:radial-gra
 .news-panel .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
 @media(max-width:900px){.news-panel .news-filterbar{overflow-x:auto;overflow-y:visible;padding-bottom:16px;scrollbar-width:thin}.news-panel .news-select-label{flex:0 0 165px}.news-panel .news-sources{margin-left:0}}
 @media(min-width:901px){.news-panel .news-filterbar{flex-wrap:nowrap}}
+
+/* Representação nacional na visão Brasil */
+.governance-panel .national-president{display:flex;align-items:center;gap:20px;background:#182f48;border:1px solid #3a5874;border-radius:14px;padding:24px}
+.national-avatar{width:74px;height:74px;border-radius:14px;display:grid;place-items:center;background:#264968;color:#a4e2fa;font-size:38px;flex:none}
+.national-president strong{display:block;font-size:23px;line-height:1.4;color:#f1f8ff}
+.national-president small,.national-governor small{display:block;font-size:11px;color:#adc3d6;margin:6px 0}
+.national-president a{display:inline-block;margin-top:10px}
+.governance-panel #vereadoresCards:has(.national-governor){grid-template-columns:repeat(3,minmax(0,1fr));max-height:660px;gap:10px}
+.national-governor{display:grid;grid-template-columns:37px minmax(0,1fr) 26px;align-items:center;gap:10px;padding:12px;background:#182e47;border:1px solid #38526c;border-radius:11px;min-width:0}
+.national-uf{display:grid;place-items:center;width:36px;height:36px;background:#275577;border:1px solid #477d9f;border-radius:9px;font-size:11px;font-weight:800;color:#d7f3ff}
+.national-governor strong{font-size:12px;overflow-wrap:anywhere;color:#f0f8ff}
+.national-governor a{text-decoration:none;font-size:16px;text-align:center}
+@media(max-width:1050px){.governance-panel #vereadoresCards:has(.national-governor){grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.governance-panel #vereadoresCards:has(.national-governor){grid-template-columns:1fr}.national-president{padding:15px}.national-president strong{font-size:17px}}
