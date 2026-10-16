@@ -265,3 +265,50 @@ html,body{background:#0b1525;color:var(--paper)}body{background-image:radial-gra
   .content>.transparency-panel,
   .content>.contracts-panel{margin:0}
 }
+
+/* Gestão e representação: prefeito em destaque e grade compacta de vereadores */
+.governance-panel .governance{display:grid;grid-template-columns:minmax(0,1fr);gap:22px}
+.governance-panel .gov-card{padding:20px;border-radius:15px;min-width:0}
+.governance-panel .gov-card>b{display:block;font-size:17px;margin-bottom:8px}
+.governance-panel .gov-meta{margin-bottom:15px}
+.governance-panel #prefeitoCards{display:grid;grid-template-columns:1fr;gap:14px;max-height:none;overflow:visible}
+.governance-panel #vereadoresCards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;max-height:640px;overflow-y:auto;padding:3px 6px 6px 2px;align-items:stretch}
+.governance-panel .rep-modern{display:grid;grid-template-columns:75px minmax(0,1fr) 92px;gap:12px;align-items:center;align-content:start;padding:16px;min-width:0;border:1px solid #38516f;border-radius:13px;background:#162940}
+.governance-panel .rep-modern>.rep-photo{width:75px;min-height:90px;grid-column:1}
+.governance-panel .rep-modern>.rep-photo img{width:75px;height:90px;object-fit:cover;border-radius:11px}
+.governance-panel .rep-modern>.rep-details{min-width:0;grid-column:2;display:flex;flex-direction:column;gap:5px}
+.governance-panel .rep-modern>.rep-details strong{font-size:15px;line-height:1.3;overflow-wrap:anywhere}
+.governance-panel .rep-modern>.rep-details small{font-size:11px;line-height:1.45}
+.governance-panel .rep-modern>.rep-score{grid-column:3;grid-row:1;width:92px;justify-self:end;gap:4px;min-width:0}
+.governance-panel .rep-modern .rep-score-meter{width:68px;height:68px}
+.governance-panel .rep-modern .rep-score-meter strong{font-size:19px}
+.governance-panel .rep-modern .rep-score-state{line-height:1.35;overflow-wrap:anywhere}
+.governance-panel .rep-modern>.rep-profile{grid-column:1/-1;min-width:0;border-top:1px solid #35506a;padding-top:10px}
+.governance-panel .rep-profile summary{cursor:pointer;list-style:none;color:#a5dbff;font-weight:700;font-size:11px;display:flex;justify-content:space-between;align-items:center}
+.governance-panel .rep-profile summary::-webkit-details-marker{display:none}
+.governance-panel .rep-profile summary span{transition:transform .2s}
+.governance-panel .rep-profile[open] summary span{transform:rotate(45deg)}
+.governance-panel .rep-profile-body{display:flex;flex-direction:column;gap:10px;padding:14px 0 2px;overflow-wrap:anywhere}
+.governance-panel .rep-profile-body a{font-size:11px}
+.governance-panel .rep-profile-body .rep-score-notice details a{display:block}
+.governance-panel .gov-mayor .rep-modern{grid-template-columns:110px minmax(0,1fr) 112px;padding:22px;gap:20px}
+.governance-panel .gov-mayor .rep-photo{width:105px;min-height:125px}
+.governance-panel .gov-mayor .rep-photo img{width:105px;height:125px}
+.governance-panel .gov-mayor .rep-details strong{font-size:23px}
+.governance-panel .gov-mayor .rep-score{width:112px}
+.governance-panel .gov-mayor .rep-score-meter{width:90px;height:90px}
+.governance-panel .gov-mayor .rep-score-meter strong{font-size:23px}
+@media(max-width:1150px){
+ .governance-panel #vereadoresCards{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:700px){
+ .governance-panel .gov-card{padding:14px}
+ .governance-panel #vereadoresCards{grid-template-columns:1fr;max-height:620px}
+ .governance-panel .gov-mayor .rep-modern,.governance-panel .rep-modern{grid-template-columns:68px minmax(0,1fr) 75px;padding:12px;gap:9px}
+ .governance-panel .gov-mayor .rep-photo,.governance-panel .rep-modern>.rep-photo{width:65px;min-height:82px}
+ .governance-panel .gov-mayor .rep-photo img,.governance-panel .rep-modern>.rep-photo img{width:65px;height:82px}
+ .governance-panel .gov-mayor .rep-details strong{font-size:16px}
+ .governance-panel .gov-mayor .rep-score,.governance-panel .rep-modern>.rep-score{width:75px}
+ .governance-panel .gov-mayor .rep-score-meter,.governance-panel .rep-modern .rep-score-meter{width:64px;height:64px}
+ .governance-panel .gov-mayor .rep-score-meter strong{font-size:18px}
+}
