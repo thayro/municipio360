@@ -229,3 +229,24 @@ html,body{background:#0b1525;color:var(--paper)}body{background-image:radial-gra
   .content>.social-panel #socialList,
   .content>.transparency-panel #financeList{max-height:430px;flex:none;overflow-y:auto}
 }
+
+/* Correção: nunca cortar botões, filtros ou links após a altura fixa */
+@media(min-width:701px){
+  .content>.panel:not(.governance-panel){
+    overflow-x:hidden;
+    overflow-y:auto;
+    scrollbar-width:thin;
+    overscroll-behavior:contain;
+  }
+  .content>.panel:not(.governance-panel)>.filters,
+  .content>.panel:not(.governance-panel)>.gov-links,
+  .content>.panel:not(.governance-panel)>.note,
+  .content>.panel:not(.governance-panel)>.textlink{
+    flex-shrink:0;
+  }
+  .content>.news-panel .news-list,
+  .content>.contracts-panel .contracts-list,
+  .content>.social-panel #socialList{
+    min-height:140px;
+  }
+}
