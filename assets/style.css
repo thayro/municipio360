@@ -154,3 +154,13 @@ html,body{background:#0b1525;color:var(--paper)}body{background-image:radial-gra
 .finance-table tbody tr:nth-child(even){background:#192c43}
 .finance-number{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 @media(max-width:700px){.finance-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.finance-bar-row{grid-template-columns:minmax(70px,1fr) minmax(75px,1.5fr) 28px;gap:6px}}
+
+/* Cobertura jornalística verificável por representante (não é reputação). */
+.media-score{display:flex;flex-direction:column;gap:7px;margin-top:10px;padding-top:9px;border-top:1px solid #375370;min-width:0}
+.media-score small{color:#a9c6d9;font-size:10px;line-height:1.4}
+.media-score-button{align-self:flex-start}
+.media-score-reading{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.media-score-reading strong{font-size:19px;color:#b5ebf7;white-space:nowrap}
+.media-score-reading span{font-size:10px;color:#d4e7f3}
+.media-score details{font-size:11px}
+.media-score details a{display:block;margin-top:8px;line-height:1.4;overflow-wrap:anywhere}
