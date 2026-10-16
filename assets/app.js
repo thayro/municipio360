@@ -176,17 +176,21 @@ function renderNationalGovernance(){
  loadNationalPhotos();}
 
 
+// Fontes governamentais verificadas, priorizadas antes de consultas externas.
+const nationalOfficialPhotos={'Luiz Inácio Lula da Silva':"https://www.gov.br/planejamento/pt-br/assuntos/noticias/2026/imagens/55156120202_eb131de887_o.jpg/@@images/image-1847-ab43b5834cceb5a118f2f34172060dff.jpeg"};
 let nationalPhotoPromise=null;
 async function loadNationalPhotos(){
  if(!document.querySelector('[data-national-photo]')){console.warn('[Município360/Fotos] Nenhum cartão nacional localizado no DOM.');return;}
  console.groupCollapsed('[Município360/Fotos] Diagnóstico de carregamento');console.info('Cartões encontrados:',document.querySelectorAll('[data-national-photo]').length);console.groupEnd();
  function applyPhotos(data){
+  // Mantém imagens institucionais independentes da disponibilidade da Wikimedia.
+  data={...data,fotos:{...(data.fotos||{}),...nationalOfficialPhotos}};
   const photos=data.fotos||{};
   console.info('[Município360/Fotos] API retornou',Object.keys(photos).length,'foto(s); consultados:',data.consultados??'não informado','ausentes:',data.ausentes||{},'aviso:',data.aviso||'nenhum');
   document.querySelectorAll('[data-national-photo]').forEach(box=>{
    const key=box.dataset.nationalPhoto,url=photos[key];
    if(box.querySelector('img'))return;
-   if(typeof url!=='string'||!url.startsWith('https://upload.wikimedia.org/')){console.warn('[Município360/Fotos] Sem URL válida:',key,url||'(vazio)');return;}
+   if(typeof url!=='string'||!(['https://upload.wikimedia.org/','https://www.gov.br/'].some(prefix=>url.startsWith(prefix)))){console.warn('[Município360/Fotos] Sem URL válida:',key,url||'(vazio)');return;}
    const fallback=box.querySelector('.national-uf');
    const img=document.createElement('img');
    img.src=url;img.alt='Retrato de '+key;img.loading='lazy';img.referrerPolicy='no-referrer';
@@ -195,6 +199,7 @@ async function loadNationalPhotos(){
    box.prepend(img);
   });
  }
+ applyPhotos({fotos:nationalOfficialPhotos,consultados:1});
  if(!nationalPhotoPromise){
   const offsets=[0,4,8,12,16,20,24];
   let next=0;
