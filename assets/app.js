@@ -169,9 +169,46 @@ function renderNationalGovernance(){
  $('legislativeHeading').textContent='Governadores — 26 estados e DF';
  $('prefeitoMeta').textContent='Presidente em exercício · mandato 2023–2026';
  $('vereadoresMeta').textContent='Referência nominal: setembro de 2026. Alterações e interinidades devem ser confirmadas em fontes oficiais.';
- $('prefeitoCards').innerHTML='<article class="national-president"><span class="national-avatar" aria-hidden="true">♙</span><div><strong>Luiz Inácio Lula da Silva</strong><small>Presidente da República</small><a href="https://www.gov.br/planalto/pt-br" target="_blank" rel="noopener noreferrer">Consultar Presidência ↗</a></div></article>';
+ $('prefeitoCards').innerHTML='<article class="national-president"><span class="national-avatar" data-national-photo="Luiz Inácio Lula da Silva" aria-label="Foto indisponível">♙</span><div><strong>Luiz Inácio Lula da Silva</strong><small>Presidente da República</small><a href="https://www.gov.br/planalto/pt-br" target="_blank" rel="noopener noreferrer">Consultar Presidência ↗</a></div></article>';
  $('vereadoresCards').innerHTML=nationalGovernors.map(([uf,estado,nome])=>'<article class="national-governor"><span class="national-uf">'+escapeHtml(uf)+'</span><div><strong>'+escapeHtml(nome)+'</strong><small>'+escapeHtml(estado)+'</small></div><a href="https://www.google.com/search?q='+encodeURIComponent('site:gov.br governador '+estado+' 2026')+'" target="_blank" rel="noopener noreferrer" aria-label="Consultar governo de '+escapeHtml(estado)+'">↗</a></article>').join('');
  $('govLinks').innerHTML='<a href="https://www.gov.br/planalto/pt-br" target="_blank" rel="noopener noreferrer">Presidência ↗</a><a href="https://www.conass.org.br/" target="_blank" rel="noopener noreferrer">Informações estaduais ↗</a><a href="https://nexoeconomico.com/politica/governadores-do-brasil-2026/" target="_blank" rel="noopener noreferrer">Fonte da lista (13/09/2026) ↗</a>';
+
+ loadNationalPhotos();}
+
+let nationalPhotoCache=null;
+let nationalPhotoPromise=null;
+async function loadNationalPhotos(){
+ const names=['Luiz Inácio Lula da Silva',...nationalGovernors.map(x=>x[2])];
+ if(!nationalPhotoPromise){
+  nationalPhotoPromise=(async()=>{
+   const endpoint=new URL('https://pt.wikipedia.org/w/api.php');
+   endpoint.search=new URLSearchParams({action:'query',format:'json',origin:'*',redirects:'1',prop:'pageimages',piprop:'thumbnail',pithumbsize:'180',titles:names.join('|')}).toString();
+   const response=await fetch(endpoint.toString(),{mode:'cors'});
+   if(!response.ok)throw new Error('Wikipedia indisponível');
+   const data=await response.json();
+   const normalize=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
+   const redirects=new Map((data.query?.redirects||[]).map(x=>[normalize(x.from),normalize(x.to)]));
+   const pages=new Map(Object.values(data.query?.pages||{}).map(x=>[normalize(x.title),x]));
+   const found=new Map();
+   for(const name of names){
+    const k=normalize(name),page=pages.get(redirects.get(k)||k);
+    const photo=page?.thumbnail?.source||'';
+    try{const url=new URL(photo);if(url.protocol==='https:'&&url.hostname==='upload.wikimedia.org')found.set(name,photo);}catch{}
+   }
+   return found;
+  })().catch(()=>new Map());
+ }
+ nationalPhotoCache=await nationalPhotoPromise;
+ if(state.city||state.uf)return;
+ document.querySelectorAll('[data-national-photo]').forEach(box=>{
+  const url=nationalPhotoCache.get(box.dataset.nationalPhoto);
+  if(!url||box.querySelector('img'))return;
+  const img=document.createElement('img');
+  img.src=url;img.alt='Retrato de '+box.dataset.nationalPhoto;img.loading='lazy';img.referrerPolicy='no-referrer';
+  img.addEventListener('load',()=>{box.classList.add('has-photo');box.removeAttribute('aria-label');});
+  img.addEventListener('error',()=>{img.remove();box.classList.remove('has-photo')});
+  box.append(img);
+ });
 }
 function resetGovernanceTitles(){
  $('executiveHeading').textContent='Prefeito e administração';
