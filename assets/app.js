@@ -180,19 +180,20 @@ function renderNationalGovernance(){
 const nationalOfficialPhotos={'Luiz Inácio Lula da Silva':"https://upload.wikimedia.org/wikipedia/commons/9/9e/Foto_oficial_de_Luiz_In%C3%A1cio_Lula_da_Silva_%28ombros%29_denoise.jpg"};
 // A rota de 2022 anteriormente usada retornou HTTP 404; mantemos fotos verificadas
 // e não disparamos consultas por visitante enquanto não houver endpoint confirmado.
+const nationalVerifiedGovernorPhotos={"Clécio Luís":"https://commons.wikimedia.org/wiki/Special:FilePath/Foto%20oficial%20do%20governador%20do%20Estado%20do%20Amap%C3%A1%2C%20Cl%C3%A9cio%20Lu%C3%ADs.jpg","Paulo Dantas":"https://commons.wikimedia.org/wiki/Special:FilePath/Paulo%20Dantas%20Foto%20Oficial%20(cropped).jpg","Tarcísio de Freitas":"https://commons.wikimedia.org/wiki/Special:FilePath/Governador%20do%20Estado%20de%20S%C3%A3o%20Paulo%2C%20Tarc%C3%ADsio%20de%20Freitas%20-%20Foto%20Oficial%20(cropped).jpg","Raquel Lyra":"https://commons.wikimedia.org/wiki/Special:FilePath/Raquel%20Lyra%20em%20maio%20de%202019%20(recorte).jpg","Jorginho Mello":"https://commons.wikimedia.org/wiki/Special:FilePath/Governador%20Jorginho%20Mello%20-%20Foto%20Eduardo%20Valente%20-%20GOVSC-7%20(cropped%20-%203x4).jpg","Eduardo Riedel":"https://commons.wikimedia.org/wiki/Special:FilePath/Eduardo%20Riedel%20avatar.jpg"};
 let nationalPhotoPromise=null;
 async function loadNationalPhotos(){
  if(!document.querySelector('[data-national-photo]')){console.warn('[Município360/Fotos] Nenhum cartão nacional localizado no DOM.');return;}
  console.groupCollapsed('[Município360/Fotos] Diagnóstico de carregamento');console.info('Cartões encontrados:',document.querySelectorAll('[data-national-photo]').length);console.groupEnd();
  function applyPhotos(data){
   // Mantém imagens institucionais independentes da disponibilidade da Wikimedia.
-  data={...data,fotos:{...(data.fotos||{}),...nationalOfficialPhotos}};
+  data={...data,fotos:{...(data.fotos||{}),...nationalVerifiedGovernorPhotos,...nationalOfficialPhotos}};
   const photos=data.fotos||{};
   console.info('[Município360/Fotos] API retornou',Object.keys(photos).length,'foto(s); consultados:',data.consultados??'não informado','ausentes:',data.ausentes||{},'aviso:',data.aviso||'nenhum');
   document.querySelectorAll('[data-national-photo]').forEach(box=>{
    const key=box.dataset.nationalPhoto,url=photos[key];
    if(box.querySelector('img'))return;
-   if(typeof url!=='string'||!(['https://upload.wikimedia.org/','https://www.gov.br/'].some(prefix=>url.startsWith(prefix))))return;
+   if(typeof url!=='string'||!(['https://upload.wikimedia.org/','https://commons.wikimedia.org/','https://www.gov.br/'].some(prefix=>url.startsWith(prefix))))return;
    const fallback=box.querySelector('.national-uf');
    const img=document.createElement('img');
    img.src=url;img.alt='Retrato de '+key;img.loading='lazy';img.referrerPolicy='no-referrer';
@@ -201,7 +202,7 @@ async function loadNationalPhotos(){
    box.prepend(img);
   });
  }
- applyPhotos({fotos:nationalOfficialPhotos,consultados:1});
+ applyPhotos({fotos:{...nationalVerifiedGovernorPhotos,...nationalOfficialPhotos},consultados:1});
  // Consulta eleitoral de 2022 suspensa: rota de fotos não confirmada (HTTP 404).
  // Mantém somente fotos antigas em cache como alternativa; evita novas consultas em massa à Wikipédia.
  if(!nationalPhotoPromise){
