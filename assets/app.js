@@ -352,7 +352,7 @@ $('newsList').addEventListener('error',event=>{
  const card=image.closest('.news-card-shell');
  const link=card?.querySelector('a.news-editorial-item');
  image.remove();
- if(link&&card?.isConnected){newsImageCache.delete(link.href);hydrateNewsImages()}
+ if(link&&card?.isConnected&&!card.dataset.previewRetried){card.dataset.previewRetried='1';hydrateNewsImages()}
 },true);
 function resetUnifiedMedia(scope){
  unifiedMedia.scope=scope;unifiedMedia.news=[];unifiedMedia.mentions=[];unifiedMedia.failures=[];
