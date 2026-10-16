@@ -85,11 +85,15 @@ async function loadAutomaticMediaScores(){
  const generation=++mediaGeneration;
  const cityId=String(state.city?.id||'');
  const panels=[...document.querySelectorAll('#prefeitoCards .rep-score,#vereadoresCards .rep-score')];
- for(const panel of panels){
-  if(generation!==mediaGeneration||String(state.city?.id||'')!==cityId)return;
-  if(!panel.isConnected)continue;
-  await inspectRepresentativeMedia(panel);
+ let next=0;
+ async function worker(){
+  while(next<panels.length){
+   if(generation!==mediaGeneration||String(state.city?.id||'')!==cityId)return;
+   const panel=panels[next++];
+   if(panel.isConnected)await inspectRepresentativeMedia(panel);
+  }
  }
+ await Promise.all(Array.from({length:Math.min(3,panels.length)},()=>worker()));
 }
 
 
