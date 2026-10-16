@@ -195,7 +195,8 @@ async function loadNationalPhotos(){
  if(!nationalPhotoPromise){
   const offsets=[0,4,8,12,16,20,24];
   let next=0;
-  nationalPhotoPromise=Promise.all(Array.from({length:3},async()=>{
+  const legacy=api('fotos_nacionais.php?legado=1').then(data=>{if(!state.uf&&!state.city)applyPhotos(data)}).catch(e=>console.warn('Cache anterior de fotos:',e.message));
+  nationalPhotoPromise=Promise.all([legacy,...Array.from({length:3},async()=>{
    while(next<offsets.length){
     const offset=offsets[next++];
     try{
@@ -205,7 +206,7 @@ async function loadNationalPhotos(){
      if(Object.keys(data.ausentes||{}).length)console.info('Retratos sem fonte confirmada:',data.ausentes);
     }catch(e){console.warn('Fotos nacionais: lote '+offset,e.message);}
    }
-  }));
+  })]);
  }
  await nationalPhotoPromise;
 }
