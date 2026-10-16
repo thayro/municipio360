@@ -10,7 +10,7 @@ $uf=strtolower((string)($local['microrregiao']['mesorregiao']['UF']['sigla']??$l
 if(!preg_match('/^[a-z]{2}$/',$uf)) respond(['ok'=>false,'error'=>'UF não identificada no IBGE'],502);
 
 $base='https://resultados.tse.jus.br/oficial/ele2024';
-function peopleFromResult(array $data, string $role):array {
+function peopleFromResult(array $data, string $role, string $uf, int $turn):array {
  $people=[];
  foreach(($data['carg']??[]) as $cargo){
   if(!is_array($cargo))continue;
@@ -25,10 +25,12 @@ function peopleFromResult(array $data, string $role):array {
      if(strtolower((string)($cand['e']??''))!=='s' || !preg_match('/^eleit[oa]/iu',$status))continue;
      $name=trim((string)($cand['nm']??$cand['nmu']??''));
      if($name==='')continue;
+     $sqcand=(string)($cand['sqcand']??'');
+     $photo=preg_match('/^\d{1,20}$/',$sqcand) ? 'https://resultados.tse.jus.br/oficial/ele2024/'.$turn.'/fotos/'.$uf.'/'.$sqcand.'.jpeg' : '';
      $people[]=[
       'nome'=>strip_tags($name),'nome_urna'=>strip_tags((string)($cand['nmu']??$name)),
       'partido'=>strip_tags((string)($party['sg']??'')),
-      'foto'=>'','url'=>'https://resultados.tse.jus.br/oficial/app/index.html',
+      'foto'=>$photo,'url'=>'https://resultados.tse.jus.br/oficial/app/index.html',
       'fonte'=>'TSE — resultados municipais 2024','situacao'=>$status,'cargo'=>$role,
       'votos'=>(int)($cand['vap']??0)
      ];
@@ -73,14 +75,14 @@ $hasRunoff=strtolower((string)($municipality['c']??'n'))==='s';
 
 // Resultado de prefeito só é considerado final no turno indicado pelo TSE.
 $turn=$hasRunoff?620:619;
-$key='tse-results-2024-v2-'.$uf.'-'.$code;
+$key='tse-results-2024-v3-photos-'.$uf.'-'.$code;
 $result=cached($key,21600,static function()use($base,$uf,$code,$turn){
  $mayor=getJson(resultsUrl($base,$turn,$uf,$code,11),20);
  $council=getJson(resultsUrl($base,619,$uf,$code,13),20);
  if(!($mayor['ok']??false)&&!($council['ok']??false))
   return ['ok'=>false,'error'=>'Prefeito: '.($mayor['error']??'erro').'; vereadores: '.($council['error']??'erro')];
- $mayorPeople=($mayor['ok']??false)?peopleFromResult($mayor['data'],'prefeito'):[];
- $councilPeople=($council['ok']??false)?peopleFromResult($council['data'],'vereadores'):[];
+ $mayorPeople=($mayor['ok']??false)?peopleFromResult($mayor['data'],'prefeito',$uf,$turn):[];
+ $councilPeople=($council['ok']??false)?peopleFromResult($council['data'],'vereadores',$uf,619):[];
  return ['ok'=>true,'prefeito'=>$mayorPeople[0]??null,'vice'=>null,
   'vereadores'=>array_slice($councilPeople,0,60),
   'avisos'=>array_values(array_filter([
