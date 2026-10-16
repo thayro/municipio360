@@ -504,3 +504,11 @@ html,body{background:#0b1525;color:var(--paper)}body{background-image:radial-gra
 .national-avatar img,.national-governor-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
 .national-avatar.has-photo img,.national-governor-photo.has-photo img{display:block}
 .national-governor{grid-template-columns:48px minmax(0,1fr) 26px}
+
+/* Retratos nacionais: mesma lógica de imagem + fallback dos representantes municipais */
+.national-governor-photo{position:relative;display:grid;place-items:center;width:52px;height:58px;overflow:hidden;flex:none;border-radius:10px;background:#275577;border:1px solid #477d9f}
+.national-governor-photo img,.national-avatar img{display:block;width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+.national-governor-photo img:not([src]){display:none}
+.national-governor-photo .national-uf{display:grid;width:100%;height:100%;border:0;border-radius:0;place-items:center}
+.national-governor-photo .national-uf[hidden]{display:none!important}
+.national-governor{grid-template-columns:52px minmax(0,1fr) 26px}
