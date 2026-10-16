@@ -177,13 +177,12 @@ function renderNationalGovernance(){
 
 let nationalPhotoPromise=null;
 async function loadNationalPhotos(){
- const selected=document.querySelectorAll('[data-national-photo]');
- if(!selected.length)return;
+ if(!document.querySelector('[data-national-photo]'))return;
  if(!nationalPhotoPromise)nationalPhotoPromise=api('fotos_nacionais.php').catch(e=>({fotos:{},aviso:e.message}));
  const data=await nationalPhotoPromise;
  if(state.city||state.uf)return;
  const photos=data.fotos||{};
- selected.forEach(box=>{
+ document.querySelectorAll('[data-national-photo]').forEach(box=>{
   const key=box.dataset.nationalPhoto,url=photos[key];
   if(typeof url!=='string'||!url.startsWith('https://upload.wikimedia.org/')||box.querySelector('img'))return;
   const img=document.createElement('img');
@@ -192,7 +191,7 @@ async function loadNationalPhotos(){
   img.addEventListener('error',()=>{img.remove();box.classList.remove('has-photo')});
   box.append(img);
  });
- if(data.aviso)console.info('Município360 — fotos nacionais:',data.aviso);
+ if(data.aviso)console.warn('Município360 — fotos nacionais:',data.aviso);
 }
 function resetGovernanceTitles(){
  $('executiveHeading').textContent='Prefeito e administração';
