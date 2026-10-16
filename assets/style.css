@@ -171,3 +171,21 @@ html,body{background:#0b1525;color:var(--paper)}body{background-image:radial-gra
 .rep-social>div{display:flex;gap:6px;flex-wrap:wrap}
 .rep-social a{font-size:10px;text-decoration:none;padding:6px 8px;border:1px solid #456b8b;border-radius:7px;color:#c7e9fd;background:#1a2e49}
 .rep-social a:hover{border-color:#7dd3fc}
+
+/* Medidor experimental junto à fotografia do representante */
+.official-person{display:flex;flex-wrap:wrap}
+.rep-identity{display:flex;flex-direction:column;align-items:center;flex:0 0 85px;gap:8px}
+.rep-photo{width:76px;min-height:82px;display:flex;justify-content:center}
+.rep-photo img{width:76px;height:92px;object-fit:cover;border-radius:9px}
+.rep-details{flex:1 1 155px;min-width:0}
+.rep-score{width:82px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:5px}
+.rep-score-meter{--score-progress:0%;width:76px;height:76px;border-radius:50%;background:conic-gradient(#50c4db var(--score-progress),#30465e 0);display:flex;justify-content:center;align-items:center;flex-direction:column;position:relative;isolation:isolate;color:#e3f5ff}
+.rep-score-meter:before{content:"";position:absolute;inset:7px;border-radius:50%;background:#172b44;z-index:-1}
+.rep-score-meter strong{font-size:22px;line-height:1.1}
+.rep-score-meter span,.rep-score>small{font-size:9px;color:#aec5dc}
+.rep-score-refresh{font-size:9px;padding:6px 7px}
+.rep-score-notice{font-size:10px;color:#b5cadc;line-height:1.5;margin-top:10px}
+.rep-score-notice small{display:block;line-height:1.5}
+.rep-score-notice details{margin-top:7px}
+.rep-score-notice details a{display:block;margin:6px 0;overflow-wrap:anywhere}
+@media(max-width:420px){.rep-identity{flex-basis:76px}.rep-score-meter{width:68px;height:68px}}
