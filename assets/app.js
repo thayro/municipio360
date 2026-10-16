@@ -30,13 +30,58 @@ function representativeCard(x){
   '<div class="rep-photo">'+photo+'</div>'+
   '<div class="rep-details"><strong>'+escapeHtml(x.nome)+'</strong><small>'+escapeHtml(x.cargo)+'</small><small class="rep-party">'+escapeHtml(x.partido||'Partido não informado')+'</small></div>'+
   '<div class="rep-score" data-person="'+escapeHtml(x.nome)+'"><div class="rep-score-meter" role="status" aria-label="Índice de tom de notícias ainda não calculado"><strong>…</strong><span>/ 1000</span></div><small>Tom da mídia</small><small class="rep-score-state">Calculando automaticamente</small></div>'+
-  '<details class="rep-profile"><summary>Ver perfil <span aria-hidden="true">↗</span></summary><div class="rep-profile-body">'+
+  '<button type="button" class="rep-profile-open" aria-haspopup="dialog">Ver perfil ↗</button><div class="rep-profile-body" hidden>'+
   '<small>'+escapeHtml(x.fonte||'Fonte eleitoral')+' · mandato atual não verificado</small>'+
   (x.url?'<a target="_blank" rel="noopener noreferrer" href="'+escapeHtml(x.url)+'">Consultar fonte oficial ↗</a>':'')+
   representativeSocialLinks(x)+
   '<div class="rep-score-notice">Indicador experimental baseado em manchetes indexadas, não mede caráter, aprovação ou desempenho. Sem nota quando não há evidência suficiente.</div>'+
-  '</div></details></article>';
+  '</div></article>';
 }
+
+// Modal acessível de perfil: copia os dados atualizados do cartão ao abrir.
+let profileReturnFocus=null;
+function closeRepresentativeProfile(){
+ const dialog=document.getElementById('representativeProfileDialog');
+ if(!dialog||!dialog.open)return;
+ dialog.close();
+ if(profileReturnFocus?.isConnected)profileReturnFocus.focus();
+ profileReturnFocus=null;
+}
+document.addEventListener('click',event=>{
+ const trigger=event.target.closest('.rep-profile-open');
+ if(!trigger)return;
+ const card=trigger.closest('.official-person');
+ if(!card)return;
+ let dialog=document.getElementById('representativeProfileDialog');
+ if(!dialog){
+  dialog=document.createElement('dialog');
+  dialog.id='representativeProfileDialog';
+  dialog.className='representative-profile-dialog';
+  dialog.innerHTML='<div class="rep-dialog-head"><h3 id="repDialogTitle">Perfil do representante</h3><button type="button" class="rep-dialog-close" aria-label="Fechar perfil">✕</button></div><div class="rep-dialog-content"></div>';
+  dialog.setAttribute('aria-labelledby','repDialogTitle');
+  document.body.appendChild(dialog);
+  dialog.querySelector('.rep-dialog-close').addEventListener('click',closeRepresentativeProfile);
+  dialog.addEventListener('click',e=>{if(e.target===dialog)closeRepresentativeProfile();});
+  dialog.addEventListener('close',()=>{if(profileReturnFocus?.isConnected)profileReturnFocus.focus();profileReturnFocus=null;});
+ }
+ const title=card.querySelector('.rep-details strong')?.textContent||'Representante';
+ dialog.querySelector('#repDialogTitle').textContent=title;
+ const photo=card.querySelector('.rep-photo')?.cloneNode(true);
+ const details=card.querySelector('.rep-profile-body')?.cloneNode(true);
+ const summary=card.querySelector('.rep-details')?.cloneNode(true);
+ const score=card.querySelector('.rep-score')?.cloneNode(true);
+ const body=dialog.querySelector('.rep-dialog-content');
+ body.replaceChildren();
+ const top=document.createElement('div');top.className='rep-dialog-summary';
+ if(photo)top.append(photo);
+ if(summary)top.append(summary);
+ if(score)top.append(score);
+ body.append(top);
+ if(details){details.hidden=false;body.append(details);}
+ profileReturnFocus=trigger;
+ if(!dialog.open)dialog.showModal();
+});
+
 // Classificação conservadora de linguagem de títulos. Não decide a veracidade dos fatos.
 function scoreHeadline(text){
  const s=String(text||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
