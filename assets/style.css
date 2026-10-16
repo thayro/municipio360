@@ -75,3 +75,22 @@ html,body{background:#0b1525;color:var(--paper)}body{background-image:radial-gra
  header{flex-direction:row;align-items:flex-start;flex-wrap:wrap}.header-title{flex:1;min-width:190px}.header-actions{width:100%}
 }
 @media(prefers-reduced-motion:reduce){.sidebar,.menu-toggle{transition:none}}
+
+
+/* Correção sidebar responsiva: evita conflito com layout compacto legado */
+@media (min-width:701px) and (max-width:1020px){
+ .layout:not(.sidebar-collapsed){grid-template-columns:222px minmax(0,1fr)}
+ .layout:not(.sidebar-collapsed) .sidebar{padding:23px 13px}
+ .layout:not(.sidebar-collapsed) .logo{font-size:21px;padding:0 8px 28px}
+ .layout:not(.sidebar-collapsed) .logo div{display:block}
+ .layout:not(.sidebar-collapsed) .nav{font-size:13px;text-align:left;padding:13px}
+ .layout:not(.sidebar-collapsed) .nav:first-letter{font-size:inherit}
+ .layout:not(.sidebar-collapsed) .navlabel,.layout:not(.sidebar-collapsed) .sidefooter{display:block}
+}
+@media (min-width:701px){
+ .layout.sidebar-collapsed .sidebar{width:0;min-width:0}
+}
+@media (max-width:700px){
+ .sidebar .logo div{display:block}
+ .layout.sidebar-open .sidebar{visibility:visible;transform:translateX(0);pointer-events:auto}
+}
