@@ -307,12 +307,29 @@ function renderUnifiedMedia(){
  $('totalNews').textContent=total;
  $('newsList').innerHTML=origin==='redes'
  ?'<div class="placeholder">As redes sociais disponíveis estão nos links de busca acima. Não há coleta direta de posts autenticados neste momento.</div>'
- :entries.length?entries.slice(0,100).map(n=>'<a class="news-item news-editorial-item" href="'+escapeHtml(n.url)+'" target="_blank" rel="noopener noreferrer"><span class="news-type">'+escapeHtml(newsPlatform(n)||newsPublisher(n))+'</span>'+(newsThumbnail(n)?'<img class="news-thumb" loading="lazy" referrerpolicy="no-referrer" src="'+escapeHtml(newsThumbnail(n))+'" alt="" onerror="this.remove()">':'')+'<div class="news-item-copy"><span class="source">Fonte: '+escapeHtml(newsPublisher(n))+'</span><h3>'+escapeHtml(n.titulo)+'</h3><div class="metadata">'+escapeHtml(formatDate(n.data))+'</div></div><span class="news-go" aria-hidden="true">↗</span></a>').join('')
+ :entries.length?entries.slice(0,100).map(n=>'<div class="news-card-shell"><a class="news-item news-editorial-item" href="'+escapeHtml(n.url)+'" target="_blank" rel="noopener noreferrer"><span class="news-type">'+escapeHtml(newsPlatform(n)||newsPublisher(n))+'</span>'+(newsThumbnail(n)?'<img class="news-thumb" loading="lazy" referrerpolicy="no-referrer" src="'+escapeHtml(newsThumbnail(n))+'" alt="" onerror="this.remove()">':'')+'<div class="news-item-copy"><span class="source">Fonte: '+escapeHtml(newsPublisher(n))+'</span><h3>'+escapeHtml(n.titulo)+'</h3><div class="metadata">'+escapeHtml(formatDate(n.data))+'</div></div><span class="news-go" aria-hidden="true">↗</span></a>'+(newsThumbnail(n)?'':'<button class="news-fetch-image" type="button" data-news-image-url="'+escapeHtml(n.url)+'">▣ Tentar buscar imagem da notícia</button>')+'</div>').join('')
  :'<div class="placeholder">Nenhuma publicação encontrada para este filtro nesta consulta.</div>';
  if(unifiedMedia.failures.length){
   const note=document.createElement('div');note.className='note';note.textContent='Fontes indisponíveis: '+unifiedMedia.failures.join(' | ');$('newsList').append(note);
  }
 }
+$('newsList').addEventListener('click',async e=>{
+ const btn=e.target.closest('.news-fetch-image');
+ if(!btn||!$('newsList').contains(btn))return;
+ const url=btn.dataset.newsImageUrl;
+ if(!url)return;
+ btn.disabled=true;btn.textContent='Buscando imagem…';
+ try{
+  const result=await api('noticia_imagem.php?url='+encodeURIComponent(url));
+  if(!btn.isConnected)return;
+  if(result.imagem){
+   const image=new Image();image.className='news-thumb';image.loading='lazy';image.referrerPolicy='no-referrer';image.alt='';
+   image.onload=()=>{if(btn.isConnected){btn.closest('.news-card-shell')?.querySelector('.news-editorial-item .news-type')?.after(image);btn.remove()}};
+   image.onerror=()=>{if(btn.isConnected){btn.textContent='Imagem indisponível';btn.disabled=true}};
+   image.src=result.imagem;
+  }else{btn.textContent='Imagem não encontrada';btn.disabled=true}
+ }catch(err){if(btn.isConnected){btn.disabled=false;btn.textContent='Tentar novamente · '+(err.message||'falha')}}
+});
 function resetUnifiedMedia(scope){
  unifiedMedia.scope=scope;unifiedMedia.news=[];unifiedMedia.mentions=[];unifiedMedia.failures=[];
  $('socialLinks').replaceChildren();renderUnifiedMedia();
