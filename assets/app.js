@@ -97,12 +97,12 @@ async function loadCityMediaScore(){
   const unique=new Map(),sources=new Set();
   (data.noticias_indexadas||[]).forEach(item=>{
    const title=String(item.titulo||'').trim(),link=String(item.url||'');
-   if(!title||!/^https?:\\/\\//i.test(link))return;
-   const key=title.normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toLocaleLowerCase('pt-BR');
+   if(!title||!(link.startsWith('https://')||link.startsWith('http://')))return;
+   const key=title.normalize('NFD').toLocaleLowerCase('pt-BR');
    if(unique.has(key))return;
    unique.set(key,item);
    let source=String(item.fonte||'').trim();
-   if(!source){try{source=new URL(link).hostname.replace(/^www\\./,'');}catch{}}
+   if(!source){try{source=new URL(link).hostname.replace('www.','');}catch{}}
    if(source)sources.add(source.toLocaleLowerCase('pt-BR'));
   });
   const items=[...unique.values()],enough=items.length>=5&&sources.size>=3;
