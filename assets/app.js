@@ -306,7 +306,7 @@ const currency=v=>typeof v==='number'?v.toLocaleString('pt-BR',{style:'currency'
 async function loadContracts(){if(!state.city)return;const id=state.city.id;placeholder('contractsList','Consultando o PNCP...');try{const d=await api('contratacoes.php?id='+id);if(state.city?.id!==id)return;const items=d.itens||[];$('totalBids').textContent=items.length;$('contractCount').textContent=items.length+' resultados';$('contractsList').innerHTML=items.length?items.map(c=>'<a class="contract-item" target="_blank" rel="noopener noreferrer" href="'+escapeHtml(c.link)+'"><span class="source">'+escapeHtml(c.modalidade)+'</span><h3>'+escapeHtml(c.objeto||'Contratação')+'</h3><div class="metadata">'+escapeHtml(c.orgao||'Órgão não informado')+' · '+escapeHtml(c.publicacao||'Sem data')+'</div><div class="contract-value">'+escapeHtml(currency(c.valor))+' ↗</div></a>').join(''):'<div class="placeholder">Nenhum registro retornado nas duas modalidades e no período consultado.</div>';}catch(e){placeholder('contractsList','PNCP indisponível: '+e.message);$('totalBids').textContent='—';$('contractCount').textContent='—'}}
 const brasilMarkup=$('svgWrap').innerHTML;
 let mapRequest=0;
-function restoreBrazil(){hideMunicipalTooltip();mapRequest++;$('svgWrap').innerHTML=brasilMarkup;$('mapMode').textContent='Brasil: selecione uma UF';$('mapBack').hidden=true;wireMap();}
+function restoreBrazil(){hideStatePopup();hideMunicipalTooltip();mapRequest++;$('svgWrap').innerHTML=brasilMarkup;$('mapMode').textContent='Brasil: selecione uma UF';$('mapBack').hidden=true;wireMap();}
 function resetBrazil(){
  state.uf='';state.city=null;state.cities=[];resetUnifiedMedia('brasil');
  $('ufSelect').value='';$('citySelect').disabled=true;$('citySelect').innerHTML='<option value="">Selecione um estado primeiro</option>';
@@ -348,7 +348,64 @@ function renderMunicipalGeojson(geo,uf){
 async function loadMunicipalMap(uf){const request=++mapRequest;$('mapMode').textContent='Carregando malha dos municípios de '+uf+'…';$('mapBack').hidden=false;
  try{let d=await api('malha.php?uf='+encodeURIComponent(uf));if(request!==mapRequest)return;renderMunicipalGeojson(d.data,uf);$('mapMode').textContent='Mapa municipal de '+uf+' · clique para selecionar uma cidade';}
  catch(e){if(request!==mapRequest)return;$('mapMode').textContent='Malha municipal indisponível: '+e.message+' · use a lista acima';$('svgWrap').innerHTML=brasilMarkup;wireMap()}}
-function wireMap(){document.querySelectorAll('#mapa .uf').forEach(el=>{el.classList.add('region-'+(UF_REGION[el.dataset.uf]||'centro'));el.setAttribute('tabindex','0');el.setAttribute('role','button');const fn=()=>{geoEpoch++;selectUF(el.dataset.uf)};el.addEventListener('click',fn);el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fn()}})})}
+// Dados da contagem consultados sob demanda no cadastro IBGE já usado pelo filtro estadual.
+const stateMunicipalityCounts=new Map();
+const stateMunicipalityPending=new Map();
+let activeStatePopupUF='';
+function statePopupElement(){
+ let tip=document.getElementById('stateMapTooltip');
+ if(!tip){tip=document.createElement('div');tip.id='stateMapTooltip';tip.className='state-map-tooltip';tip.setAttribute('role','tooltip');tip.hidden=true;document.body.appendChild(tip)}
+ return tip;
+}
+function hideStatePopup(){activeStatePopupUF='';const tip=document.getElementById('stateMapTooltip');if(tip)tip.hidden=true;}
+function positionStatePopup(event){
+ const tip=statePopupElement();if(tip.hidden)return;
+ let x=event.clientX+15,y=event.clientY+15;
+ const rect=tip.getBoundingClientRect();
+ x=Math.max(8,Math.min(x,innerWidth-rect.width-8));
+ y=Math.max(8,Math.min(y,innerHeight-rect.height-8));
+ tip.style.left=x+'px';tip.style.top=y+'px';
+}
+function showStatePopup(uf,event){
+ const info=nationalGovernors.find(item=>item[0]===uf);if(!info)return;
+ activeStatePopupUF=uf;
+ const tip=statePopupElement(),count=stateMunicipalityCounts.get(uf);
+ tip.innerHTML='<strong>'+escapeHtml(info[1])+' <small>('+escapeHtml(uf)+')</small></strong>'+
+  '<span>Governador(a): <b>'+escapeHtml(info[2])+'</b></span>'+
+  '<span>Municípios: <b class="state-map-municipality-count">'+escapeHtml(count===undefined?'Consultando IBGE…':count===null?'Indisponível':count.toLocaleString('pt-BR'))+'</b></span>'+
+  '<small class="state-map-source">Municípios: cadastro IBGE</small>';
+ tip.hidden=false;positionStatePopup(event);
+ if(count!==undefined)return;
+ if(!stateMunicipalityPending.has(uf)){
+  const job=api('localidades.php?tipo=municipios&uf='+encodeURIComponent(uf))
+   .then(d=>{const n=Array.isArray(d.data)?d.data.length:null;stateMunicipalityCounts.set(uf,n)})
+   .catch(e=>{console.warn('[Município360/Mapa] Contagem de municípios indisponível para '+uf,e);stateMunicipalityCounts.set(uf,null)})
+   .finally(()=>stateMunicipalityPending.delete(uf));
+  stateMunicipalityPending.set(uf,job);
+ }
+ stateMunicipalityPending.get(uf).then(()=>{
+  if(activeStatePopupUF!==uf)return;
+  const c=stateMunicipalityCounts.get(uf);
+  const countEl=tip.querySelector('.state-map-municipality-count');
+  if(countEl)countEl.textContent=c===null?'Indisponível':c.toLocaleString('pt-BR');
+ });
+}
+function wireMap(){
+ document.querySelectorAll('#mapa .uf').forEach(el=>{
+  const uf=el.dataset.uf,meta=nationalGovernors.find(item=>item[0]===uf);
+  el.classList.add('region-'+(UF_REGION[uf]||'centro'));
+  el.setAttribute('tabindex','0');el.setAttribute('role','button');
+  if(meta)el.setAttribute('aria-label',meta[1]+' — governador(a): '+meta[2]+'. Selecionar estado');
+  const fn=()=>{hideStatePopup();geoEpoch++;selectUF(uf)};
+  el.addEventListener('click',fn);
+  el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fn()}});
+  el.addEventListener('pointerenter',e=>showStatePopup(uf,e));
+  el.addEventListener('pointermove',e=>{if(activeStatePopupUF!==uf)showStatePopup(uf,e);else positionStatePopup(e)});
+  el.addEventListener('pointerleave',hideStatePopup);
+  el.addEventListener('focus',()=>{const r=el.getBoundingClientRect();showStatePopup(uf,{clientX:r.left+r.width/2,clientY:r.top+r.height/2})});
+  el.addEventListener('blur',hideStatePopup);
+ });
+}
 const appLayout=$('appLayout'),sidebarToggle=$('sidebarToggle'),sidebarBackdrop=$('sidebarBackdrop');
 const mobileSidebar=()=>window.matchMedia('(max-width:700px)').matches;
 function syncSidebarAria(){const open=mobileSidebar()?appLayout.classList.contains('sidebar-open'):!appLayout.classList.contains('sidebar-collapsed');sidebarToggle.setAttribute('aria-expanded',String(open));sidebarToggle.setAttribute('aria-label',open?'Recolher menu lateral':'Abrir menu lateral');sidebarBackdrop.setAttribute('aria-hidden',String(!open));}
