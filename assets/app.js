@@ -59,7 +59,7 @@ async function inspectRepresentativeMedia(panel){
   });
   const items=[...unique.values()];
   const meter=panel.querySelector('.rep-score-meter');
-  let info='';const labels=items.length+' matérias, '+domains.size+' fontes distintas (busca de até 30 dias).';
+  let info='';const labels=items.length+' matérias, '+domains.size+' fontes distintas (busca de até 30 dias; fonte: '+String(r.fonte||'não informada')+').';
   if(items.length>=5&&domains.size>=3){
    const tones=items.map(x=>scoreHeadline(x.titulo));
    const points=Math.round(500+tones.reduce((a,b)=>a+b,0)/tones.length*350);
@@ -70,7 +70,7 @@ async function inspectRepresentativeMedia(panel){
   }else{
    meter.querySelector('strong').textContent='N/D';
    meter.setAttribute('aria-label','Dados insuficientes para calcular o indicador');
-   info='<small>Dados insuficientes para uma pontuação: '+labels+' Mínimo de 5 matérias e 3 fontes independentes.</small>';
+   info='<small>Dados insuficientes para uma pontuação: '+labels+' Mínimo de 5 matérias e 3 fontes independentes. '+escapeHtml(r.aviso||'')+'</small>';
   }
   const notice=card.querySelector('.rep-score-notice');
   notice.innerHTML=info+(items.length?'<details><summary>Ver manchetes e fontes</summary>'+items.slice(0,15).map(x=>'<a href="'+escapeHtml(x.url)+'" target="_blank" rel="noopener noreferrer">'+escapeHtml(x.titulo||'Notícia')+' ↗</a>').join('')+'</details>':'<small>Não foram encontradas matérias; isso não representa avaliação negativa.</small>');
