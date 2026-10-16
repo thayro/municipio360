@@ -250,3 +250,8 @@ html,body{background:#0b1525;color:var(--paper)}body{background-image:radial-gra
     min-height:140px;
   }
 }
+
+/* Espaçamento consistente entre os painéis de prestação de contas e licitações */
+.content{row-gap:20px;column-gap:16px}
+.content>.transparency-panel,.content>.contracts-panel{margin-top:0}
+@media(max-width:700px){.content{row-gap:18px;column-gap:12px}}
