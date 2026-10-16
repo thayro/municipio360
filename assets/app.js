@@ -89,26 +89,34 @@ async function loadCitySocialSignals(){
  const city=state.city,box=$('citySocialSignals');if(!city||!box)return;
  const current=++socialSignalsRequest,id=String(city.id);
  box.hidden=false;
- $('citySocialStatus').textContent='Consultando YouTube…';
+ $('citySocialStatus').textContent='Consultando hashtags e menções públicas…';
  $('citySocialItems').replaceChildren();
  try{
   const data=await api('redes_cidade.php?id='+encodeURIComponent(id));
   if(current!==socialSignalsRequest||String(state.city?.id)!==id)return;
   if(!data.disponivel){
-   $('citySocialStatus').textContent='YouTube: integração aguardando configuração da chave de API.';
+   $('citySocialStatus').textContent='Busca social ainda sem acesso à API oficial do YouTube. Nenhuma contagem foi estimada.';
    return;
   }
-  const items=Array.isArray(data.publicacoes)?data.publicacoes:[];
-  $('citySocialStatus').textContent='YouTube: '+items.length+' vídeos públicos encontrados na busca dos últimos 30 dias. Não representam a opinião da população.';
-  items.slice(0,5).forEach(item=>{
-   const url=String(item.url||'');if(!url.startsWith('https://www.youtube.com/watch?v='))return;
-   const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener noreferrer';
-   a.textContent=String(item.titulo||'Vídeo')+' — '+String(item.canal||'Canal');
-   $('citySocialItems').append(a);
+  const m=data.mencoes||{},count=Number(data.total_amostra||0);
+  $('citySocialStatus').textContent='Amostra de '+count+' vídeos públicos identificados no YouTube nos últimos 30 dias. Contagens por palavras nos títulos e descrições.';
+  const content=$('citySocialItems');
+  const rows=[['Cidade',m.cidade],['Prefeito / prefeitura',m.prefeito_ou_prefeitura],['Vereadores / Câmara',m.vereadores_ou_camara]];
+  rows.forEach(([label,value])=>{
+   const line=document.createElement('div');line.className='city-social-stat';
+   const name=document.createElement('span');name.textContent=label;
+   const countEl=document.createElement('strong');countEl.textContent=String(Number(value||0));
+   line.append(name,countEl);content.append(line);
   });
+  if(Array.isArray(data.hashtags)&&data.hashtags.length){
+   const title=document.createElement('small');title.textContent='Hashtags encontradas na amostra:';content.append(title);
+   const tags=document.createElement('div');tags.className='city-social-tags';
+   data.hashtags.forEach(x=>{const tag=document.createElement('span');tag.textContent=String(x.hashtag||'')+' · '+String(x.ocorrencias||0);tags.append(tag);});
+   content.append(tags);
+  }
  }catch(e){
   if(current!==socialSignalsRequest||String(state.city?.id)!==id)return;
-  $('citySocialStatus').textContent='Dados do YouTube indisponíveis nesta consulta.';
+  $('citySocialStatus').textContent='Não foi possível consultar as menções nesta tentativa.';
  }
 }
 
